@@ -2506,7 +2506,10 @@ class SystemTest {
       silenceReason: 'This test fixture is intentionally silent.',
       silenceConfirmedAt: new Date().toISOString()
     };
+    // Fork rule 1: every publish needs a recorded human approval.
+    const approved = { getProductionBundle: async () => ({ review_status: 'approved', reviewed_at: new Date().toISOString() }) };
     const agent = new PublishingSchedulingAgent({
+      ...approved,
       updateScheduleEntry: async () => {}
     }, {});
 
@@ -2522,7 +2525,7 @@ class SystemTest {
       throw new Error('publishContent removed the wrong publish queue entries');
     }
 
-    const missingNarration = new PublishingSchedulingAgent({ updateScheduleEntry: async () => {} }, {});
+    const missingNarration = new PublishingSchedulingAgent({ ...approved, updateScheduleEntry: async () => {} }, {});
     missingNarration.publishQueue = [{ productionId: 'prod-no-audio', status: 'scheduled', metadata: {} }];
     missingNarration.uploadToYouTube = async () => { throw new Error('Upload must not start without narration'); };
     let narrationPublishBlocked = false;
@@ -2546,6 +2549,7 @@ class SystemTest {
 
     let uncertainUpdates = [];
     const uncertain = new PublishingSchedulingAgent({
+      ...approved,
       updateScheduleEntry: async entry => uncertainUpdates.push({ ...entry })
     }, {});
     uncertain.publishQueue = [
@@ -2580,6 +2584,7 @@ class SystemTest {
       youtubeId: 'youtube-existing', metadata: { audio: intentionalAudio }
     };
     const reconcile = new PublishingSchedulingAgent({
+      ...approved,
       getLatestScheduleEntry: async () => recorded,
       updateScheduleEntry: async () => {}
     }, {});
@@ -2629,8 +2634,28 @@ class SystemTest {
       id: 'schedule-now', publishTime: new Date().toISOString(),
       metadata: { seo: { title: 'Publish now', description: 'Immediate upload.', tags: ['test'] }, video: { path: 'fixture.mp4' }, privacyStatus: 'public' }
     }, { publishNow: true });
-    if (uploadMetadata?.status?.privacyStatus !== 'public' || uploadMetadata?.status?.publishAt !== undefined) {
-      throw new Error('Publish now still sent a stale scheduled publishAt value');
+    const releaseAt = new Date(uploadMetadata?.status?.publishAt || 0).getTime();
+    if (uploadMetadata?.status?.privacyStatus !== 'private' || !(releaseAt > Date.now() + 10 * 60000)) {
+      throw new Error('Publish now must upload private with a near-future publishAt, never public');
+    }
+
+    for (const [label, review] of [
+      ['unreviewed', { review_status: 'needs_review', reviewed_at: null }],
+      ['missing reviewer timestamp', { review_status: 'approved', reviewed_at: null }]
+    ]) {
+      const unapproved = new PublishingSchedulingAgent({
+        getProductionBundle: async () => review,
+        updateScheduleEntry: async () => {}
+      }, {});
+      unapproved.publishQueue = [{ productionId: 'prod-x', status: 'scheduled', metadata: { audio: intentionalAudio } }];
+      unapproved.uploadToYouTube = async () => { throw new Error(`Upload started for ${label} content`); };
+      let refused = false;
+      try {
+        await unapproved.publishContent('prod-x');
+      } catch (error) {
+        refused = error.code === 'HUMAN_APPROVAL_REQUIRED';
+      }
+      if (!refused) throw new Error(`Publishing accepted ${label} content`);
     }
 
     this.logger.info('Publishing safety test completed successfully');

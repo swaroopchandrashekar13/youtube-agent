@@ -4,6 +4,7 @@ const fsSync = require('fs');
 const path = require('path');
 const { Logger } = require('../utils/logger');
 const { assertValidYouTubeMetadata } = require('../utils/youtube-metadata-validator');
+const { assertHumanApproved, resolveUploadPrivacy } = require('../utils/approval-gate');
 
 class PublishingSchedulingAgent {
   constructor(db, credentials) {
@@ -135,6 +136,8 @@ class PublishingSchedulingAgent {
         throw new Error(`Content not found in queue: ${contentId}`);
       }
       if (scheduleEntry.status === 'published') return scheduleEntry;
+      // Fork rule 1: verify the human approval record right before any upload.
+      await assertHumanApproved(this.db, scheduleEntry.productionId || contentId, scheduleEntry);
       if (!await this.isNarrationReady(scheduleEntry.metadata?.audio || productionBundle?.assets?.audio)) {
         const error = new Error('Publishing is blocked because narration is missing or the intentional-silence override is incomplete');
         error.status = 409;
@@ -206,8 +209,13 @@ class PublishingSchedulingAgent {
     
     // Prepare video metadata
     const requestedPrivacy = metadata.privacyStatus || process.env.DEFAULT_PRIVACY_STATUS || 'private';
-    const scheduledFor = new Date(scheduleEntry.publishTime);
-    const futureSchedule = !options.publishNow && Number.isFinite(scheduledFor.getTime()) && scheduledFor.getTime() > Date.now() + 60000;
+    // Fork rule 1: always upload private; a public release is a scheduled publishAt.
+    const privacy = resolveUploadPrivacy({
+      requestedPrivacy,
+      publishTime: scheduleEntry.publishTime,
+      publishNow: options.publishNow === true
+    });
+    if (privacy.note) this.logger.warn(privacy.note);
     const videoMetadata = {
       snippet: {
         title: safeMetadata.title,
@@ -218,12 +226,12 @@ class PublishingSchedulingAgent {
         defaultAudioLanguage: safeMetadata.defaultAudioLanguage
       },
       status: {
-        privacyStatus: futureSchedule ? 'private' : requestedPrivacy,
+        privacyStatus: privacy.privacyStatus,
         selfDeclaredMadeForKids: false,
         containsSyntheticMedia: metadata.containsSyntheticMedia === true
       }
     };
-    if (futureSchedule) videoMetadata.status.publishAt = scheduleEntry.publishTime;
+    if (privacy.publishAt) videoMetadata.status.publishAt = privacy.publishAt;
     
     // Resolve the file before marking the network upload as attempted.
     const videoStream = await this.getVideoStream(metadata.video.path);

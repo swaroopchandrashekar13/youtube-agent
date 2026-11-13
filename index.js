@@ -1247,7 +1247,7 @@ class YouTubeAutomationAgent {
     });
 
     this.app.put('/api/settings', protect, async (req, res) => {
-      const allowed = ['approval_required', 'notification_enabled', 'channel_timezone', 'max_daily_posts', 'content_buffer_days'];
+      const allowed = ['notification_enabled', 'channel_timezone', 'max_daily_posts', 'content_buffer_days'];
       for (const key of allowed) {
         if (req.body?.[key] !== undefined) await this.db.setSetting(key, String(req.body[key]));
       }
@@ -1539,14 +1539,11 @@ class YouTubeAutomationAgent {
 
     // Step 6: Quality and approval gate
     return this.runGenerationStage(jobId, 'quality_review', 90, async () => {
-      const approvalRequired = await this.db.getSetting('approval_required') !== 'false';
-      const packagingExperiment = approvalRequired
-        ? await this.preparePackagingExperiment(thumbnail, productionData, seoData, script)
-        : null;
+      // Fork rule 1: human approval is mandatory. The upstream `approval_required`
+      // setting is ignored; generated content can never be auto-approved.
+      const packagingExperiment = await this.preparePackagingExperiment(thumbnail, productionData, seoData, script);
       const quality = await this.operator.runQualityChecks(productionData, profile);
-      const reviewStatus = quality.passed
-        ? (approvalRequired ? 'needs_review' : 'approved')
-        : 'needs_attention';
+      const reviewStatus = quality.passed ? 'needs_review' : 'needs_attention';
       await this.db.saveContentReview(contentId, {
         status: reviewStatus,
         qualityChecks: quality.checks,
@@ -1556,23 +1553,17 @@ class YouTubeAutomationAgent {
           selectedThumbnailVariant: 0
         } : {},
         reviewNotes: quality.passed ? null : `Blocking checks failed: ${quality.blockingFailures.join(', ')}`,
-        reviewedAt: approvalRequired ? null : new Date().toISOString()
+        reviewedAt: null
       });
 
-      let scheduleEntry = null;
-      if (reviewStatus === 'approved') {
-        scheduleEntry = await this.agents.publishing.scheduleContent(productionData);
-        await this.db.updateProductionStatus(contentId, scheduleEntry ? 'scheduled' : productionData.status);
-      } else {
-        await this.db.updateProductionStatus(contentId, reviewStatus);
-        await this.operator.notify({
-          type: 'review_required',
-          level: quality.passed ? 'info' : 'warning',
-          title: quality.passed ? 'Content ready for review' : 'Content needs attention',
-          message: `${script.title} ${quality.passed ? 'is ready for approval' : 'failed one or more quality checks'}`,
-          data: { contentId, qualityScore: quality.score }
-        });
-      }
+      await this.db.updateProductionStatus(contentId, reviewStatus);
+      await this.operator.notify({
+        type: 'review_required',
+        level: quality.passed ? 'info' : 'warning',
+        title: quality.passed ? 'Content ready for review' : 'Content needs attention',
+        message: `${script.title} ${quality.passed ? 'is ready for approval' : 'failed one or more quality checks'}`,
+        data: { contentId, qualityScore: quality.score }
+      });
 
       return {
         contentId,
@@ -1580,7 +1571,7 @@ class YouTubeAutomationAgent {
         status: productionData.status,
         reviewStatus,
         qualityScore: quality.score,
-        scheduledFor: scheduleEntry ? scheduleEntry.publishTime : null
+        scheduledFor: null
       };
     });
   }

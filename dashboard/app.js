@@ -808,7 +808,9 @@ function populateSettings(profile = {}, settings = {}, providers = []) {
   for (const [name, value] of Object.entries(mapping)) {
     if (form.elements[name] && document.activeElement !== form.elements[name]) form.elements[name].value = value || '';
   }
-  $('#approval-required').checked = settings.approval_required !== 'false';
+  // Fork: human approval is always required and cannot be turned off.
+  $('#approval-required').checked = true;
+  $('#approval-required').disabled = true;
   $('#notifications-enabled').checked = settings.notification_enabled !== 'false';
   const videoMapping = {
     videoProvider: settings.video_provider || 'slideshow',
@@ -1779,7 +1781,6 @@ $('#profile-form').addEventListener('submit', async event => {
   try {
     await mutate('/api/profile', 'PUT', values, 'Channel setup saved.');
     await mutate('/api/settings', 'PUT', {
-      approval_required: $('#approval-required').checked,
       notification_enabled: $('#notifications-enabled').checked,
       channel_timezone: values.timezone,
       video_provider: values.videoProvider,

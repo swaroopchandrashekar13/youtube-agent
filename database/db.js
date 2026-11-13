@@ -673,7 +673,7 @@ class Database {
       ['thumbnail_ab_testing', 'false', 'Enable thumbnail A/B testing'],
       ['content_backup_enabled', 'true', 'Enable content backup'],
       ['notification_enabled', 'true', 'Enable system notifications'],
-      ['approval_required', 'true', 'Require human approval before scheduling generated content'],
+      ['approval_required', 'true', 'Ignored by this fork: human approval is always required'],
       ['automation_paused', 'false', 'Pause generation and publishing automation'],
       ['channel_timezone', 'America/Chicago', 'Timezone used to present channel schedules'],
       ['max_daily_posts', '1', 'Maximum posts per day'],
