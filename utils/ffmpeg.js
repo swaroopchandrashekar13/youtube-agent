@@ -24,6 +24,8 @@ function getFFmpegPath() {
 
   try {
     cachedPath = require('ffmpeg-static');
+    // Fork fix: the package can be installed without its binary (e.g. npm ci --ignore-scripts).
+    if (cachedPath && !fs.existsSync(cachedPath)) cachedPath = null;
   } catch (error) {
     cachedPath = null;
   }
