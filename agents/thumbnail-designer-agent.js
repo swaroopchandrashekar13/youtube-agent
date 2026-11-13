@@ -2,6 +2,7 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs').promises;
 const { Logger } = require('../utils/logger');
+const { escapeHtml, safeCssColor } = require('../utils/html-escape');
 
 class ThumbnailDesignerAgent {
   constructor(db, credentials) {
@@ -189,8 +190,8 @@ class ThumbnailDesignerAgent {
   async createPrompt(concept) {
     const prompt = `Create a YouTube thumbnail with the following specifications:
     Style: ${concept.style}
-    Primary Text: "${concept.primaryText}"
-    Secondary Text: "${concept.secondaryText}"
+    Primary Text: "${escapeHtml(concept.primaryText)}"
+    Secondary Text: "${escapeHtml(concept.secondaryText)}"
     Color Scheme: ${concept.colors.primary}, ${concept.colors.secondary}, ${concept.colors.accent}
     Elements to include: ${concept.elements.join(', ')}
     Emotional tone: ${concept.emotion}
@@ -260,14 +261,14 @@ class ThumbnailDesignerAgent {
       <svg width="1280" height="720">
         <style>
           .primary { 
-            fill: ${concept.colors.accent === 'white' ? 'white' : 'black'}; 
+            fill: ${safeCssColor(concept.colors.accent) === 'white' ? 'white' : 'black'}; 
             font-size: 120px; 
             font-weight: bold; 
             font-family: Arial, sans-serif;
             text-anchor: middle;
           }
           .secondary { 
-            fill: ${concept.colors.accent}; 
+            fill: ${safeCssColor(concept.colors.accent)}; 
             font-size: 60px; 
             font-weight: bold; 
             font-family: Arial, sans-serif;
@@ -280,12 +281,12 @@ class ThumbnailDesignerAgent {
         </style>
         
         <!-- Shadow -->
-        <text x="642" y="302" class="primary shadow">${concept.primaryText}</text>
-        <text x="642" y="402" class="secondary shadow">${concept.secondaryText}</text>
+        <text x="642" y="302" class="primary shadow">${escapeHtml(concept.primaryText)}</text>
+        <text x="642" y="402" class="secondary shadow">${escapeHtml(concept.secondaryText)}</text>
         
         <!-- Main text -->
-        <text x="640" y="300" class="primary">${concept.primaryText}</text>
-        <text x="640" y="400" class="secondary">${concept.secondaryText}</text>
+        <text x="640" y="300" class="primary">${escapeHtml(concept.primaryText)}</text>
+        <text x="640" y="400" class="secondary">${escapeHtml(concept.secondaryText)}</text>
       </svg>
     `;
     

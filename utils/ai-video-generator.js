@@ -5,6 +5,7 @@ const path = require('path');
 const axios = require('axios');
 const sharp = require('sharp');
 const { Logger } = require('./logger');
+const { escapeHtml, safeDataImageUrl } = require('./html-escape');
 const { runFFmpeg, getMediaDuration, checkFFmpeg, ffmpegInstallHint } = require('./ffmpeg');
 const { MediaGenerationService } = require('./media-generation-service');
 
@@ -560,6 +561,11 @@ class AIVideoGenerator {
 
     try {
       const page = await browser.newPage();
+      // Fork rule 3: the render page may never reach the network; only inline data is allowed.
+      await page.route('**/*', route => {
+        const url = route.request().url();
+        return url.startsWith('data:') || url === 'about:blank' ? route.continue() : route.abort();
+      });
       await page.setViewportSize({ width: 1920, height: 1080 });
 
       // Create HTML for slideshow (only real image files can be embedded)
@@ -789,9 +795,9 @@ class AIVideoGenerator {
     
     <!-- Title Slide -->
     <div class="slide active">
-        ${visualAssets[0] ? `<img class="background-image" src="${visualAssets[0]}" /><div class="scrim"></div>` : ''}
+        ${safeDataImageUrl(visualAssets[0]) ? `<img class="background-image" src="${safeDataImageUrl(visualAssets[0])}" /><div class="scrim"></div>` : ''}
         <div class="content">
-            <h1>${script.title}</h1>
+            <h1>${escapeHtml(script.title)}</h1>
         </div>
     </div>
 
@@ -846,9 +852,9 @@ class AIVideoGenerator {
         
         slides.push(`
         <div class="slide">
-            ${visualAssets[assetIndex] ? `<img class="background-image" src="${visualAssets[assetIndex]}" /><div class="scrim"></div>` : ''}
+            ${safeDataImageUrl(visualAssets[assetIndex]) ? `<img class="background-image" src="${safeDataImageUrl(visualAssets[assetIndex])}" /><div class="scrim"></div>` : ''}
             <div class="content">
-                <h2>${section.title}</h2>
+                <h2>${escapeHtml(section.title)}</h2>
                 ${this.formatSectionContent(section)}
             </div>
         </div>`);
@@ -861,13 +867,13 @@ class AIVideoGenerator {
   formatSectionContent(section) {
     if (section.items && Array.isArray(section.items)) {
       return section.items.slice(0, 3).map(item => 
-        `<p>${item.number}. ${item.title}</p>`
+        `<p>${escapeHtml(item.number)}. ${escapeHtml(item.title)}</p>`
       ).join('');
     }
     
     if (section.steps && Array.isArray(section.steps)) {
       return section.steps.slice(0, 3).map(step => 
-        `<p>${step.title}</p>`
+        `<p>${escapeHtml(step.title)}</p>`
       ).join('');
     }
     
@@ -876,12 +882,12 @@ class AIVideoGenerator {
       return section.content
         .filter(line => typeof line === 'string' && line.trim())
         .slice(0, 3)
-        .map(line => `<p>${line.slice(0, 120)}${line.length > 120 ? '...' : ''}</p>`)
+        .map(line => `<p>${escapeHtml(line.slice(0, 120))}${line.length > 120 ? '...' : ''}</p>`)
         .join('');
     }
 
     if (typeof section.content === 'string') {
-      return `<p>${section.content.slice(0, 200)}${section.content.length > 200 ? '...' : ''}</p>`;
+      return `<p>${escapeHtml(section.content.slice(0, 200))}${section.content.length > 200 ? '...' : ''}</p>`;
     }
 
     return '';
