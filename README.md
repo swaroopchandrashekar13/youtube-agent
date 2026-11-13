@@ -1,5 +1,7 @@
 # YouTube Automation Agent
 
+> **Private fork.** This repository is a fork of [darkzOGx/youtube-automation-agent](https://github.com/darkzOGx/youtube-automation-agent) (MIT, attribution kept). Human approval cannot be turned off here, every upload goes out private, and upstream autonomy features are disabled by default. See [`docs/FORK.md`](docs/FORK.md) for every divergence and [`CLAUDE.md`](CLAUDE.md) for the standing rules. The upstream README follows unchanged.
+
 **The open-source AI agent that runs a YouTube channel end to end, with you approving every video before it goes out.**
 
 It researches topics, writes scripts, generates narration and visuals, assembles real MP4s, writes titles, descriptions and tags, schedules approved videos, and learns from analytics and from what your audience says. It runs on your own machine with your own API keys.
