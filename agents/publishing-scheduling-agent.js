@@ -7,6 +7,7 @@ const { assertValidYouTubeMetadata } = require('../utils/youtube-metadata-valida
 const { assertHumanApproved, resolveUploadPrivacy } = require('../utils/approval-gate');
 const { FEATURES, assertFeatureEnabled } = require('../utils/features');
 const { isFakeMode, createFakeYouTubeClient } = require('../utils/fake-providers');
+const { requiresSyntheticDisclosure } = require('../utils/disclosure');
 
 class PublishingSchedulingAgent {
   constructor(db, credentials) {
@@ -235,7 +236,9 @@ class PublishingSchedulingAgent {
       status: {
         privacyStatus: privacy.privacyStatus,
         selfDeclaredMadeForKids: false,
-        containsSyntheticMedia: metadata.containsSyntheticMedia === true
+        // Fork rule 7: AI voice/video/images always set the disclosure, whatever the reviewer toggled.
+        containsSyntheticMedia: metadata.containsSyntheticMedia === true ||
+          requiresSyntheticDisclosure({ audio: metadata.audio, finalVideo: metadata.video })
       }
     };
     if (privacy.publishAt) videoMetadata.status.publishAt = privacy.publishAt;

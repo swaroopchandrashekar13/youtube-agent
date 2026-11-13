@@ -99,6 +99,7 @@ async function main() {
   const insert = agent.agents.publishing.youtube.calls.find(call => call.method === 'videos.insert');
   check('uploaded to fake YouTube', Boolean(insert?.id) && insert.bytes > 0, insert && { id: insert.id, bytes: insert.bytes });
   check('upload sent private', insert?.requestBody?.status?.privacyStatus === 'private', insert?.requestBody?.status);
+  check('synthetic-content disclosure set for AI narration', insert?.requestBody?.status?.containsSyntheticMedia === true);
   check('public release is a scheduled publishAt', insert?.requestBody?.status?.publishAt === publishTime, insert?.requestBody?.status?.publishAt);
 
   const passed = checks.every(item => item.passed);
