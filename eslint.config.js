@@ -40,6 +40,7 @@ module.exports = [
         require: 'readonly',
         setInterval: 'readonly',
         setTimeout: 'readonly',
+        setImmediate: 'readonly',
         URL: 'readonly',
         window: 'readonly',
         document: 'readonly',

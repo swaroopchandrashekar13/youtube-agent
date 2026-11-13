@@ -1,6 +1,19 @@
 const winston = require('winston');
 const path = require('path');
 const chalk = require('chalk');
+const { redactText, redactValue, secretValues } = require('./redact');
+const { SECRET_ENV_KEYS } = require('./config');
+
+// Fork rule 2: every log record (file and console) passes through redaction.
+const redactFormat = winston.format(info => {
+  const secrets = secretValues(SECRET_ENV_KEYS);
+  for (const key of Object.keys(info)) info[key] = redactValue(info[key], secrets);
+  return info;
+});
+
+function jsonConsole() {
+  return process.env.LOG_FORMAT === 'json';
+}
 
 class Logger {
   constructor(component = 'System') {
@@ -10,31 +23,43 @@ class Logger {
 
   createWinstonLogger() {
     const logDir = path.join(__dirname, '..', 'logs');
-    
+    const format = winston.format.combine(
+      winston.format.errors({ stack: true }),
+      redactFormat(),
+      winston.format.timestamp(),
+      winston.format.json()
+    );
+
+    // LOG_FORMAT=json (containers): one structured JSON line per record on stdout, no log files.
+    if (jsonConsole()) {
+      return winston.createLogger({
+        level: process.env.LOG_LEVEL || 'info',
+        format,
+        defaultMeta: { component: this.component },
+        transports: [new winston.transports.Console()]
+      });
+    }
+
     return winston.createLogger({
       level: process.env.LOG_LEVEL || 'info',
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-      ),
+      format,
       defaultMeta: { component: this.component },
       transports: [
         // Write all logs to combined.log
-        new winston.transports.File({ 
+        new winston.transports.File({
           filename: path.join(logDir, 'combined.log'),
           maxsize: 5242880, // 5MB
           maxFiles: 5,
         }),
-        
+
         // Write error logs to error.log
-        new winston.transports.File({ 
-          filename: path.join(logDir, 'error.log'), 
+        new winston.transports.File({
+          filename: path.join(logDir, 'error.log'),
           level: 'error',
           maxsize: 5242880, // 5MB
           maxFiles: 3,
         }),
-        
+
         // Write agent-specific logs
         new winston.transports.File({
           filename: path.join(logDir, `${this.component.toLowerCase()}.log`),
@@ -45,19 +70,24 @@ class Logger {
     });
   }
 
+  /** Pretty console output; suppressed when winston already writes JSON to stdout. */
+  console(line) {
+    if (!jsonConsole()) console.log(redactText(line, secretValues(SECRET_ENV_KEYS)));
+  }
+
   info(message, ...args) {
     this.winston.info(message, ...args);
-    console.log(this.formatConsoleMessage('INFO', message, chalk.blue));
+    this.console(this.formatConsoleMessage('INFO', message, chalk.blue));
   }
 
   success(message, ...args) {
     this.winston.info(message, ...args);
-    console.log(this.formatConsoleMessage('SUCCESS', message, chalk.green));
+    this.console(this.formatConsoleMessage('SUCCESS', message, chalk.green));
   }
 
   warn(message, ...args) {
     this.winston.warn(message, ...args);
-    console.log(this.formatConsoleMessage('WARN', this.withDetail(message, args[0]), chalk.yellow));
+    this.console(this.formatConsoleMessage('WARN', this.withDetail(message, args[0]), chalk.yellow));
   }
 
   error(message, error = null, ...args) {
@@ -70,9 +100,9 @@ class Logger {
     }
     // The cause must reach the console even when NODE_ENV=production hides
     // the stack; otherwise "X failed:" is printed with no reason at all.
-    console.log(this.formatConsoleMessage('ERROR', this.withDetail(message, error), chalk.red));
-    if (error?.stack && process.env.NODE_ENV !== 'production') {
-      console.error(chalk.red(error.stack));
+    this.console(this.formatConsoleMessage('ERROR', this.withDetail(message, error), chalk.red));
+    if (error?.stack && process.env.NODE_ENV !== 'production' && !jsonConsole()) {
+      console.error(chalk.red(redactText(error.stack, secretValues(SECRET_ENV_KEYS))));
     }
   }
 
@@ -90,7 +120,7 @@ class Logger {
   debug(message, ...args) {
     this.winston.debug(message, ...args);
     if (process.env.NODE_ENV !== 'production') {
-      console.log(this.formatConsoleMessage('DEBUG', message, chalk.gray));
+      this.console(this.formatConsoleMessage('DEBUG', message, chalk.gray));
     }
   }
 
