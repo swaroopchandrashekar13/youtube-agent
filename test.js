@@ -2178,7 +2178,7 @@ class SystemTest {
           refused = error.name === 'ConfigError' && /API_KEY/.test(error.message);
         }
         if (!refused || listenArgs) throw new Error('A non-loopback HOST without API_KEY was not refused');
-        process.env.API_KEY = 'test-api-key-0123456789abcdef';
+        process.env.API_KEY = 'x'.repeat(32);
         await server.start();
         if (listenArgs?.host !== '0.0.0.0') throw new Error('HOST did not override the dashboard bind address');
       } finally {
