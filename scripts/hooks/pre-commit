@@ -1,0 +1,9 @@
+#!/bin/sh
+# Fork pre-commit hook: block commits that contain secrets (CLAUDE.md rule 2).
+# Install with: npm run hooks:install   (sets core.hooksPath=scripts/hooks)
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks is not installed. Install it (https://github.com/gitleaks/gitleaks#installing)" >&2
+  echo "pre-commit: or bypass once with: git commit --no-verify (CI will still scan)." >&2
+  exit 1
+fi
+exec gitleaks git --pre-commit --staged --redact --no-banner .

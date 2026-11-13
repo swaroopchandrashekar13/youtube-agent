@@ -1,0 +1,6 @@
+# Findings reviewed and confirmed as fake test fixtures (not real secrets).
+# The fixtures were later rewritten to be assembled at runtime; these entries
+# only cover the historical commits. Add an entry here only after review.
+b4b7a432a16179c579a21b3d25860720e66b5ddd:test.js:generic-api-key:2181
+ac9c78d25a6c6bafaca79af68c2fd1af3d88832b:test/unit/logger.test.js:generic-api-key:7
+ac9c78d25a6c6bafaca79af68c2fd1af3d88832b:test/unit/redact.test.js:aws-access-token:24

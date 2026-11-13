@@ -1,0 +1,7 @@
+# Optional: for people who use the pre-commit framework (https://pre-commit.com).
+# Without it, run `npm run hooks:install` to use scripts/hooks/pre-commit instead.
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.28.0
+    hooks:
+      - id: gitleaks

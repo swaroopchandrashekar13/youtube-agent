@@ -1,0 +1,36 @@
+{
+  "$comment": "Dependency license policy (CLAUDE.md rule 8). scripts/check-licenses.js reads package-lock.json and fails on anything not allowed here. Every exception needs a reason and a review date.",
+  "lastVerified": "2026-11-13",
+  "allowed": [
+    "MIT", "MIT-0", "ISC", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "0BSD",
+    "BlueOak-1.0.0", "Python-2.0", "CC0-1.0", "CC-BY-4.0", "Unlicense", "BSD"
+  ],
+  "flagged": ["GPL", "AGPL", "LGPL", "SSPL", "BUSL", "Commons-Clause", "Elastic", "Remotion"],
+  "exceptions": {
+    "ffmpeg-static": {
+      "license": "GPL-3.0-or-later",
+      "reason": "Optional dependency bundling a GPL ffmpeg build. Used only for local installs; the Docker image installs with --ignore-scripts and uses the distro ffmpeg via FFMPEG_PATH. Never redistributed.",
+      "reviewed": "2026-11-13"
+    },
+    "@img/sharp-libvips-*": {
+      "license": "LGPL-3.0-or-later",
+      "reason": "Prebuilt libvips dynamically loaded by sharp; LGPL obligations are met by not modifying it. Attribution kept via node_modules.",
+      "reviewed": "2026-11-13"
+    },
+    "@img/sharp-wasm32": {
+      "license": "Apache-2.0 AND LGPL-3.0-or-later AND MIT",
+      "reason": "sharp WebAssembly fallback; same terms as libvips above.",
+      "reviewed": "2026-11-13"
+    },
+    "@img/sharp-win32-*": {
+      "license": "Apache-2.0 AND LGPL-3.0-or-later",
+      "reason": "sharp Windows prebuilds (not installed on Linux); same terms as libvips above.",
+      "reviewed": "2026-11-13"
+    },
+    "parse-cache-control": {
+      "license": "BSD (licenses array, no SPDX field)",
+      "reason": "Transitive dependency of ffmpeg-static; LICENSE file is the BSD 3-clause text (checked 2026-11-13).",
+      "reviewed": "2026-11-13"
+    }
+  }
+}

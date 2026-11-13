@@ -21,7 +21,10 @@
     "credentials:setup": "node utils/credential-manager.js setup",
     "lint": "eslint .",
     "test:unit": "node --test test/unit/*.test.js",
-    "dry-run": "node scripts/dry-run.js"
+    "dry-run": "node scripts/dry-run.js",
+    "license:check": "node scripts/check-licenses.js",
+    "hooks:install": "git config core.hooksPath scripts/hooks",
+    "secrets:scan": "gitleaks git --redact --no-banner ."
   },
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.0",

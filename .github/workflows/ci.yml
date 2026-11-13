@@ -2,31 +2,116 @@ name: CI
 
 on:
   push:
-    branches:
-      - master
   pull_request:
-    branches:
-      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  lint-test:
+    name: Lint, test, licenses (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node }}
           cache: npm
 
+      - name: Install system ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+
+      # Same as the Docker image: no install scripts; only the native modules we need are built.
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci --ignore-scripts
+          npm rebuild sqlite3 sharp
 
       - name: Lint
         run: npm run lint
 
       - name: Test
         run: npm test
+        env:
+          FFMPEG_PATH: /usr/bin/ffmpeg
+          FFPROBE_PATH: /usr/bin/ffprobe
+
+      - name: License check
+        run: npm run license:check
+
+  secrets:
+    name: Secret scan (gitleaks, full history)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: gitleaks
+        run: >
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo
+          zricethezav/gitleaks:v8.28.0
+          git --redact --no-banner --verbose /repo
+
+  dry-run:
+    name: Offline end-to-end dry run (fake providers)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install system packages
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-core
+
+      - name: Install dependencies
+        run: |
+          npm ci --ignore-scripts
+          npm rebuild sqlite3 sharp
+          npx playwright install --with-deps chromium
+
+      - name: Dry run
+        run: npm run -s dry-run -- --out "$RUNNER_TEMP/dry-run" | tee "$RUNNER_TEMP/dry-run-summary.log"
+        env:
+          FFMPEG_PATH: /usr/bin/ffmpeg
+          FFPROBE_PATH: /usr/bin/ffprobe
+
+      - name: Upload dry-run output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dry-run
+          path: |
+            ${{ runner.temp }}/dry-run/final.mp4
+            ${{ runner.temp }}/dry-run/fake-youtube/calls.jsonl
+            ${{ runner.temp }}/dry-run-summary.log
+          if-no-files-found: warn
+          retention-days: 7
+
+  audit:
+    name: Dependency audit (report only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Remaining advisories need semver-major upgrades tracked in docs/FORK.md.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm audit --omit=dev
