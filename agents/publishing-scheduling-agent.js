@@ -5,6 +5,7 @@ const path = require('path');
 const { Logger } = require('../utils/logger');
 const { assertValidYouTubeMetadata } = require('../utils/youtube-metadata-validator');
 const { assertHumanApproved, resolveUploadPrivacy } = require('../utils/approval-gate');
+const { FEATURES, assertFeatureEnabled } = require('../utils/features');
 
 class PublishingSchedulingAgent {
   constructor(db, credentials) {
@@ -348,6 +349,7 @@ class PublishingSchedulingAgent {
   }
 
   async applyVideoPackaging(videoId, packaging = {}, previousPackaging = null) {
+    assertFeatureEnabled(FEATURES.GROWTH_EXPERIMENTS);
     const title = String(packaging.title || '').trim();
     if (!videoId || !title || title.length > 100 || !packaging.thumbnailPath) {
       const error = new Error('A valid video ID, title, and thumbnail are required for a packaging change');

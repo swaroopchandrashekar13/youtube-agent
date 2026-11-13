@@ -24,9 +24,21 @@ function apiKey() {
   return localStorage.getItem('yaa_api_key') || '';
 }
 
+// Fork: mirror the key into a SameSite=Strict cookie so <img>/<video> previews
+// (which cannot send headers) pass the server's API-key gate.
+function syncApiKeyCookie(key = apiKey()) {
+  document.cookie = key
+    ? `yaa_api_key=${encodeURIComponent(key)}; path=/; SameSite=Strict`
+    : 'yaa_api_key=; path=/; SameSite=Strict; Max-Age=0';
+}
+syncApiKeyCookie();
+
 function requestApiKey() {
   const key = prompt('Enter the API_KEY value from your .env. It stays in this browser only.', apiKey());
-  if (key !== null) localStorage.setItem('yaa_api_key', key.trim());
+  if (key !== null) {
+    localStorage.setItem('yaa_api_key', key.trim());
+    syncApiKeyCookie(key.trim());
+  }
   return key;
 }
 

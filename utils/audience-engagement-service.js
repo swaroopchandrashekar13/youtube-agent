@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { Logger } = require('./logger');
+const { FEATURES, assertFeatureEnabled } = require('./features');
 
 const FORCE_SSL_SCOPE = 'https://www.googleapis.com/auth/youtube.force-ssl';
 const COMMENT_FLAGS = ['question', 'request', 'praise', 'correction', 'spam', 'scam', 'toxic'];
@@ -532,6 +533,7 @@ Comments: ${JSON.stringify(payload)}`;
       draft = await this.db.updateReplyDraft(draftId, { editedText: input.editedText.trim().slice(0, 1000) });
     }
     const text = (draft.editedText || draft.draftText || '').trim();
+    assertFeatureEnabled(FEATURES.REPLY_POSTING);
     try {
       const posted = await this.insertComment({ parentId: draft.commentId, text });
       if (!posted?.id) throw new Error('YouTube did not return a comment id for the posted reply');

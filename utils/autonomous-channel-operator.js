@@ -1,4 +1,5 @@
 const { Logger } = require('./logger');
+const { FEATURES, assertFeatureEnabled } = require('./features');
 
 class AutonomousChannelOperator {
   constructor(db, options = {}) {
@@ -13,6 +14,7 @@ class AutonomousChannelOperator {
   }
 
   async start(strategy) {
+    assertFeatureEnabled(FEATURES.AUTONOMOUS_OPERATOR);
     if (!strategy || strategy.status !== 'active') {
       const error = new Error('Save and activate a channel strategy before starting the autonomous operator');
       error.status = 409;
@@ -34,6 +36,7 @@ class AutonomousChannelOperator {
   }
 
   async resume(runId, strategy) {
+    assertFeatureEnabled(FEATURES.AUTONOMOUS_OPERATOR);
     const run = await this.db.getOperatorRun(runId);
     if (!run) {
       const error = new Error('Operator run not found');

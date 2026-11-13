@@ -1,3 +1,4 @@
+const { FEATURES, assertFeatureEnabled } = require('./features');
 const fs = require('fs').promises;
 const { Logger } = require('./logger');
 
@@ -428,6 +429,7 @@ class GrowthExperimentService {
   }
 
   async applyArm(experiment, arm, previousArm) {
+    assertFeatureEnabled(FEATURES.GROWTH_EXPERIMENTS);
     if (!arm) throw this.error('Experiment arm is missing', 409, 'EXPERIMENT_STATE_INVALID');
     await this.publishing.applyVideoPackaging(experiment.videoId, {
       title: arm.title,

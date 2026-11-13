@@ -1,3 +1,9 @@
+// Fork: upstream features are disabled by default (see utils/features.js).
+// This harness exercises them directly, so it enables them for its own process.
+for (const name of ['FEATURE_AUTONOMOUS_OPERATOR', 'FEATURE_GROWTH_EXPERIMENTS', 'FEATURE_REPLY_POSTING', 'FEATURE_SHORTS', 'FEATURE_SCHEDULER']) {
+  if (process.env[name] === undefined) process.env[name] = 'true';
+}
+
 const { Database } = require('./database/db');
 const { Logger } = require('./utils/logger');
 const { CredentialManager } = require('./utils/credential-manager');
@@ -2162,12 +2168,23 @@ class SystemTest {
       try {
         await server.start();
         if (listenArgs?.host !== '127.0.0.1') throw new Error(`Dashboard server bound to ${listenArgs?.host} instead of loopback by default`);
+        // Fork: a non-loopback HOST without API_KEY is refused before anything listens.
         process.env.HOST = '0.0.0.0';
+        listenArgs = null;
+        let refused = false;
+        try {
+          await server.start();
+        } catch (error) {
+          refused = error.name === 'ConfigError' && /API_KEY/.test(error.message);
+        }
+        if (!refused || listenArgs) throw new Error('A non-loopback HOST without API_KEY was not refused');
+        process.env.API_KEY = 'test-api-key-0123456789abcdef';
         await server.start();
         if (listenArgs?.host !== '0.0.0.0') throw new Error('HOST did not override the dashboard bind address');
       } finally {
         console.log = quietLog;
         delete process.env.HOST;
+        delete process.env.API_KEY;
       }
 
       // #66: credential and token files are owner-only.

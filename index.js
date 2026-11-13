@@ -29,10 +29,9 @@ const { AITextService } = require('./utils/ai-text-service');
 const { DiscoverabilityService } = require('./utils/discoverability-service');
 const { version } = require('./package.json');
 const chalk = require('chalk');
-
-function isLoopbackHost(host) {
-  return ['127.0.0.1', '::1', 'localhost'].includes(String(host).toLowerCase()) || /^127\./.test(String(host));
-}
+const { loadConfig, ConfigError } = require('./utils/config');
+const { apiKeyMatches, extractApiKey, securityMiddleware } = require('./utils/http-security');
+const { FEATURES, isFeatureEnabled } = require('./utils/features');
 
 class YouTubeAutomationAgent {
   constructor() {
@@ -135,17 +134,21 @@ class YouTubeAutomationAgent {
       // Setup API endpoints
       this.setupAPI();
       
-      // Initialize scheduler
-      this.logger.info('Setting up automation scheduler...');
-      this.scheduler = new DailyAutomation(this.agents, this.db, {
-        generateContent: input => this.queueScheduledContent(input),
-        engagement: this.engagement,
-        experiments: this.experiments
-      });
-      await this.scheduler.initialize();
+      // Initialize scheduler (fork: off by default; job mode replaces the in-process cron)
+      if (isFeatureEnabled(FEATURES.SCHEDULER)) {
+        this.logger.info('Setting up automation scheduler...');
+        this.scheduler = new DailyAutomation(this.agents, this.db, {
+          generateContent: input => this.queueScheduledContent(input),
+          engagement: this.engagement,
+          experiments: this.experiments
+        });
+        await this.scheduler.initialize();
 
-      if (await this.db.getSetting('automation_paused') === 'true') {
-        await this.scheduler.pauseAutomation();
+        if (await this.db.getSetting('automation_paused') === 'true') {
+          await this.scheduler.pauseAutomation();
+        }
+      } else {
+        this.logger.info('In-process scheduler disabled (FEATURE_SCHEDULER=false); nothing runs on a timer');
       }
       
       this.isInitialized = true;
@@ -222,7 +225,7 @@ class YouTubeAutomationAgent {
         return next();
       }
 
-      if (req.get('x-api-key') !== process.env.API_KEY) {
+      if (!apiKeyMatches(extractApiKey(req), process.env.API_KEY)) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
@@ -377,6 +380,13 @@ class YouTubeAutomationAgent {
     };
   }
   setupAPI() {
+    this.app.disable('x-powered-by');
+    // Fork: host allow-list, cross-origin refusal and API-key gate for reads and writes.
+    this.app.use(securityMiddleware({
+      bindHost: process.env.HOST || '127.0.0.1',
+      extraHosts: String(process.env.ALLOWED_HOSTS || '').split(',').map(host => host.trim()).filter(Boolean),
+      apiKey: process.env.API_KEY
+    }));
     this.app.use(express.json({ limit: '1mb' }));
     this.app.use(express.static(path.join(__dirname, 'dashboard')));
 
@@ -1391,7 +1401,7 @@ class YouTubeAutomationAgent {
 
   async queueScheduledContent(input = {}) {
     const strategy = await this.db.getChannelStrategy();
-    if (strategy?.status === 'active') {
+    if (strategy?.status === 'active' && isFeatureEnabled(FEATURES.AUTONOMOUS_OPERATOR)) {
       const weeklyOutput = await this.db.getRow(
         `SELECT COUNT(*) AS count FROM generation_jobs
          WHERE source = 'autonomous_operator' AND status = 'completed'
@@ -1833,6 +1843,9 @@ class YouTubeAutomationAgent {
   }
 
   async start() {
+    // Throws ConfigError (names only, never values) before anything starts.
+    const config = loadConfig(process.env);
+
     const initialized = await this.initialize();
     
     if (!initialized) {
@@ -1840,15 +1853,11 @@ class YouTubeAutomationAgent {
       process.exit(1);
     }
     
-    const PORT = process.env.PORT || 3456;
-    // Loopback by default: mutating routes are open whenever API_KEY is unset,
-    // so the dashboard must not be reachable from the network unless asked.
-    const HOST = process.env.HOST || '127.0.0.1';
+    // Loopback by default; config validation refuses any other HOST without API_KEY.
+    const PORT = config.PORT;
+    const HOST = config.HOST;
     this.app.listen(PORT, HOST, () => {
       console.log(chalk.green(`\n✅ YouTube Automation Agent running on ${HOST}:${PORT}`));
-      if (!isLoopbackHost(HOST) && !process.env.API_KEY) {
-        console.log(chalk.yellow(`⚠️  HOST=${HOST} exposes the dashboard to your network without API_KEY. Set API_KEY in .env to protect generation, approval, and publishing routes.`));
-      }
       console.log(chalk.gray('─'.repeat(50)));
       console.log(chalk.white('📊 Dashboard: ') + chalk.cyan(`http://localhost:${PORT}`));
       console.log(chalk.white('🔧 API Health: ') + chalk.cyan(`http://localhost:${PORT}/health`));
@@ -1858,7 +1867,9 @@ class YouTubeAutomationAgent {
       if (this.setupRequired) {
         console.log(chalk.yellow('\n⚙️  Setup is required. The dashboard is available; run npm run walkthrough to enable generation.'));
       } else {
-        console.log(chalk.yellow('\n🤖 Automation is active. Approved content will be published on schedule.'));
+        console.log(chalk.yellow(this.scheduler
+          ? '\n🤖 Scheduler is active. Approved content is uploaded private and released at its approved time.'
+          : '\n🤖 Ready. Nothing runs on a timer; approve content in the dashboard and publish on demand.'));
       }
     });
   }
@@ -1868,7 +1879,12 @@ class YouTubeAutomationAgent {
 if (require.main === module) {
   const agent = new YouTubeAutomationAgent();
   agent.start().catch(error => {
-    console.error(chalk.red('Fatal error:'), error);
+    if (error instanceof ConfigError) {
+      console.error(chalk.red(`\n❌ ${error.message}`));
+      console.error(chalk.yellow('Fix the values in .env (see .env.example) and start again.'));
+    } else {
+      console.error(chalk.red('Fatal error:'), error);
+    }
     process.exit(1);
   });
 }

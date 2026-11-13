@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { version } = require('../package.json');
+const { FEATURES, isFeatureEnabled } = require('./features');
 
 const ALLOWED_EVENTS = new Set([
   'setup_ready',
@@ -17,6 +18,7 @@ class AnonymousTelemetry {
   }
 
   configuration() {
+    if (!isFeatureEnabled(FEATURES.ANONYMOUS_TELEMETRY)) return { enabled: false, reason: 'disabled_in_fork' };
     const optedIn = String(process.env.ANONYMOUS_TELEMETRY_ENABLED || '').toLowerCase() === 'true';
     const endpoint = process.env.ANONYMOUS_TELEMETRY_ENDPOINT || '';
     if (!optedIn) return { enabled: false, reason: 'not_opted_in' };

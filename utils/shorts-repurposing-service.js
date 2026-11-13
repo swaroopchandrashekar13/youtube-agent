@@ -2,6 +2,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const { runFFmpeg } = require('./ffmpeg');
 const { Logger } = require('./logger');
+const { FEATURES, assertFeatureEnabled } = require('./features');
 
 const LAYOUTS = new Set(['blur', 'crop', 'stacked']);
 
@@ -245,6 +246,7 @@ class ShortsRepurposingService {
   }
 
   async approve(productionId, clipId, input = {}) {
+    assertFeatureEnabled(FEATURES.SHORTS);
     if (input.confirmed !== true) {
       const error = new Error('Confirm the inherited evidence and Short schedule before approval');
       error.status = 409;
