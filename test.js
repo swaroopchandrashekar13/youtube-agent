@@ -3076,7 +3076,7 @@ class SystemTest {
       const { chromium } = require('playwright');
       let browser = null;
       try {
-        browser = await chromium.launch();
+        browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
       } catch (error) {
         if (!/Executable doesn't exist|playwright install/i.test(error.message)) throw error;
         this.logger.warn('Chromium is not installed — verified browser-safe image embedding without the live browser assertion');

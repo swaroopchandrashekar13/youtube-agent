@@ -6,6 +6,7 @@ const axios = require('axios');
 const sharp = require('sharp');
 const { Logger } = require('./logger');
 const { escapeHtml, safeDataImageUrl } = require('./html-escape');
+const { isFakeMode, synthesizeFakeNarration } = require('./fake-providers');
 const { runFFmpeg, getMediaDuration, checkFFmpeg, ffmpegInstallHint } = require('./ffmpeg');
 const { MediaGenerationService } = require('./media-generation-service');
 
@@ -70,7 +71,15 @@ class AIVideoGenerator {
     this.getMediaDuration = options.getMediaDuration || getMediaDuration;
     this.lastVideoResult = null;
     this.lastNarrationResult = null;
-    
+    this.fakeMode = isFakeMode();
+
+    if (this.fakeMode) {
+      // Fork: fake mode builds no paid clients even when keys exist; visuals use the local slideshow.
+      this.logger.info('PROVIDERS_MODE=fake: synthetic narration, local slideshow, no paid providers');
+      this.mediaGeneration = options.mediaGeneration || null;
+      return;
+    }
+
     // Initialize AI services with graceful fallback
     const openaiKey = resolvedCredentials.openai?.apiKey || process.env.OPENAI_API_KEY;
     const replicateKey = resolvedCredentials.replicate?.apiKey || process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY;
@@ -122,7 +131,11 @@ class AIVideoGenerator {
 
     try {
       let generatedPath;
-      if (this.elevenLabsApiKey && this.elevenLabsVoiceId) {
+      if (this.fakeMode) {
+        provider = 'fake';
+        model = 'ffmpeg-sine';
+        generatedPath = (await synthesizeFakeNarration(text, outputPath)).path;
+      } else if (this.elevenLabsApiKey && this.elevenLabsVoiceId) {
         provider = 'elevenlabs';
         model = this.elevenLabsModel;
         generatedPath = await this.generateElevenLabsTTS(text, outputPath);
@@ -556,7 +569,8 @@ class AIVideoGenerator {
     }
 
     const { chromium } = require('playwright');
-    const browser = await chromium.launch();
+    // Fork: CHROMIUM_PATH points Playwright at a system Chromium when its bundled build is absent.
+    const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
     const slidesDir = path.join(path.dirname(outputPath), 'slides');
 
     try {

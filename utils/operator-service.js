@@ -1,6 +1,7 @@
 const fs = require('fs').promises;
 const axios = require('axios');
 const { Logger } = require('./logger');
+const { isFakeMode } = require('./fake-providers');
 
 class OperatorService {
   constructor(db) {
@@ -163,7 +164,7 @@ class OperatorService {
 
     const id = await this.db.createNotification(notification);
     const webhookUrl = process.env.NOTIFICATION_WEBHOOK_URL;
-    if (webhookUrl) {
+    if (webhookUrl && !isFakeMode()) {
       try {
         await axios.post(webhookUrl, {
           text: `${notification.title}: ${notification.message}`,

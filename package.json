@@ -20,7 +20,8 @@
     "agent:analytics": "node agents/analytics-optimization-agent.js",
     "credentials:setup": "node utils/credential-manager.js setup",
     "lint": "eslint .",
-    "test:unit": "node --test test/unit/*.test.js"
+    "test:unit": "node --test test/unit/*.test.js",
+    "dry-run": "node scripts/dry-run.js"
   },
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.0",

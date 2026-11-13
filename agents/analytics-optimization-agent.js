@@ -1,4 +1,5 @@
 const { google } = require('googleapis');
+const { isFakeMode, createFakeYouTubeClient, createFakeYouTubeAnalyticsClient } = require('../utils/fake-providers');
 const { Logger } = require('../utils/logger');
 const { ChannelLearningEngine } = require('../utils/channel-learning-engine');
 
@@ -43,6 +44,12 @@ class AnalyticsOptimizationAgent {
 
   async setupAnalyticsAPI() {
     try {
+      if (isFakeMode()) {
+        this.youtubeAnalytics = createFakeYouTubeAnalyticsClient();
+        this.youtube = createFakeYouTubeClient();
+        this.logger.info('PROVIDERS_MODE=fake: using offline YouTube Analytics fake');
+        return;
+      }
       const auth = this.credentials.getYouTubeAuth();
       this.youtubeAnalytics = google.youtubeAnalytics({ version: 'v2', auth });
       this.youtube = google.youtube({ version: 'v3', auth });

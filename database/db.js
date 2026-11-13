@@ -5,7 +5,8 @@ const { Logger } = require('../utils/logger');
 
 class Database {
   constructor() {
-    this.dbPath = path.join(__dirname, '..', 'data', 'youtube_automation.db');
+    // Fork: DATABASE_PATH lets dry runs and jobs use an isolated database file.
+    this.dbPath = process.env.DATABASE_PATH || path.join(__dirname, '..', 'data', 'youtube_automation.db');
     this.db = null;
     this.logger = new Logger('Database');
   }

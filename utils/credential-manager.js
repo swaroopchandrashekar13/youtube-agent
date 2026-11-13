@@ -4,6 +4,7 @@ const { google } = require('googleapis');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const { Logger } = require('./logger');
+const { isFakeMode, createFakeYouTubeClient } = require('./fake-providers');
 const { PROVIDERS, GEMINI_MODELS, GEMINI_DEFAULT_MODEL } = require('./ai-text-service');
 
 // API keys and OAuth tokens are owner-only (0600). writeFile's mode applies only
@@ -144,6 +145,7 @@ class CredentialManager {
   }
 
   getYouTubeAuth() {
+    if (isFakeMode()) throw new Error('PROVIDERS_MODE=fake: no live YouTube auth');
     if (!this.credentials.youtube || !this.tokens.youtube) {
       throw new Error('YouTube credentials not configured');
     }
@@ -159,6 +161,10 @@ class CredentialManager {
   }
 
   getYouTubeClient() {
+    if (isFakeMode()) {
+      this.fakeYouTube = this.fakeYouTube || createFakeYouTubeClient();
+      return this.fakeYouTube;
+    }
     const auth = this.getYouTubeAuth();
     return google.youtube({ version: 'v3', auth });
   }
@@ -612,6 +618,9 @@ class CredentialManager {
     } catch (error) {
       // Files might not exist yet
     }
+
+    // Fork: fake mode runs offline with fake providers, so no credentials are needed.
+    if (isFakeMode()) return true;
 
     const missing = this.getMissingCredentials();
 

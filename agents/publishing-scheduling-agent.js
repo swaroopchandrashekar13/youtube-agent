@@ -6,6 +6,7 @@ const { Logger } = require('../utils/logger');
 const { assertValidYouTubeMetadata } = require('../utils/youtube-metadata-validator');
 const { assertHumanApproved, resolveUploadPrivacy } = require('../utils/approval-gate');
 const { FEATURES, assertFeatureEnabled } = require('../utils/features');
+const { isFakeMode, createFakeYouTubeClient } = require('../utils/fake-providers');
 
 class PublishingSchedulingAgent {
   constructor(db, credentials) {
@@ -25,6 +26,11 @@ class PublishingSchedulingAgent {
 
   async setupYouTubeAPI() {
     try {
+      if (isFakeMode()) {
+        this.youtube = createFakeYouTubeClient();
+        this.logger.info('PROVIDERS_MODE=fake: using the offline YouTube fake');
+        return;
+      }
       const auth = this.credentials.getYouTubeAuth();
       this.youtube = google.youtube({ version: 'v3', auth });
       this.logger.info('YouTube API initialized');

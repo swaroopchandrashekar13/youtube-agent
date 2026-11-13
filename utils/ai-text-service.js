@@ -1,5 +1,6 @@
 const OpenAI = require('openai');
 const { Logger } = require('./logger');
+const { isFakeMode } = require('./fake-providers');
 
 const GEMINI_MODELS = [
   'gemini-3.8-flash',
@@ -76,6 +77,11 @@ class AITextService {
   }
 
   _init(credentials) {
+    if (isFakeMode()) {
+      // Fork: fake mode never builds a networked client; agents use their template fallbacks.
+      this.logger.info('PROVIDERS_MODE=fake: AI text disabled, using template fallbacks');
+      return;
+    }
     const provider = credentials.aiProvider?.provider;
     const apiKey = credentials.aiProvider?.apiKey;
     const model = credentials.aiProvider?.model;
