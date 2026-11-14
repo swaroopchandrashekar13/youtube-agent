@@ -1,3 +1,4 @@
+// node-cron 4: createTask() returns a stopped task (v3 used schedule(..., { scheduled: false })).
 const cron = require('node-cron');
 const { Logger } = require('../utils/logger');
 
@@ -30,74 +31,74 @@ class DailyAutomation {
   async setupScheduledTasks() {
     // Daily content generation at 6:00 AM
     this.scheduledTasks.set('daily-content-generation', 
-      cron.schedule('0 6 * * *', async () => {
+      cron.createTask('0 6 * * *', async () => {
         if (this.isEnabled) {
           await this.runDailyContentGeneration();
         }
-      }, { scheduled: false })
+      })
     );
 
     // Publishing queue processing every 15 minutes
     this.scheduledTasks.set('publish-queue-processing',
-      cron.schedule('*/15 * * * *', async () => {
+      cron.createTask('*/15 * * * *', async () => {
         if (this.isEnabled) {
           await this.processPublishQueue();
         }
-      }, { scheduled: false })
+      })
     );
 
     // Analytics collection at 9:00 AM daily
     this.scheduledTasks.set('daily-analytics',
-      cron.schedule('0 9 * * *', async () => {
+      cron.createTask('0 9 * * *', async () => {
         if (this.isEnabled) {
           await this.collectDailyAnalytics();
         }
-      }, { scheduled: false })
+      })
     );
 
     // Weekly strategy review on Sundays at 8:00 AM
     this.scheduledTasks.set('weekly-strategy-review',
-      cron.schedule('0 8 * * 0', async () => {
+      cron.createTask('0 8 * * 0', async () => {
         if (this.isEnabled) {
           await this.weeklyStrategyReview();
         }
-      }, { scheduled: false })
+      })
     );
 
     // Optimization tasks daily at 10:00 PM
     this.scheduledTasks.set('daily-optimization',
-      cron.schedule('0 22 * * *', async () => {
+      cron.createTask('0 22 * * *', async () => {
         if (this.isEnabled) {
           await this.runDailyOptimization();
         }
-      }, { scheduled: false })
+      })
     );
 
     // Database maintenance weekly on Saturdays at 3:00 AM
     this.scheduledTasks.set('database-maintenance',
-      cron.schedule('0 3 * * 6', async () => {
+      cron.createTask('0 3 * * 6', async () => {
         if (this.isEnabled) {
           await this.databaseMaintenance();
         }
-      }, { scheduled: false })
+      })
     );
 
     // Audience comment sync every 4 hours; the service's own taper decides which videos are due
     this.scheduledTasks.set('audience-engagement-sync',
-      cron.schedule('0 */4 * * *', async () => {
+      cron.createTask('0 */4 * * *', async () => {
         if (this.isEnabled) {
           await this.collectAudienceEngagement();
         }
-      }, { scheduled: false })
+      })
     );
 
     // Collect controlled experiment evidence and advance only pre-approved arms.
     this.scheduledTasks.set('growth-experiment-refresh',
-      cron.schedule('30 */4 * * *', async () => {
+      cron.createTask('30 */4 * * *', async () => {
         if (this.isEnabled) {
           await this.refreshGrowthExperiments();
         }
-      }, { scheduled: false })
+      })
     );
 
     // Start all scheduled tasks
@@ -597,7 +598,8 @@ class DailyAutomation {
 
     // Check scheduled tasks
     this.scheduledTasks.forEach((task, name) => {
-      health.scheduledTasks[name] = task.running;
+      // node-cron 4 reports state through getStatus() ('stopped' | 'idle' | 'running').
+      health.scheduledTasks[name] = typeof task.getStatus === 'function' ? task.getStatus() !== 'stopped' : Boolean(task.running);
     });
 
     // Get system resources (simplified)
