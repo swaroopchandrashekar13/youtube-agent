@@ -1975,7 +1975,8 @@ class SystemTest {
 
     // Discussion #74: sharp 0.33's wasm32 build crashes with @emnapi/runtime >= 1.4
     // (Termux and other platforms without a native binary).
-    const [major, minor] = require('sharp/package.json').version.split('.').map(Number);
+    // Fork: sharp 0.35 no longer exports package.json; read the version from the module.
+    const [major, minor] = require('sharp').versions.sharp.split('.').map(Number);
     if (major === 0 && minor < 34) {
       throw new Error(`sharp ${major}.${minor} cannot load its wasm32 build with current @emnapi/runtime`);
     }
