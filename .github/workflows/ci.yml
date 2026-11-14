@@ -122,14 +122,66 @@ jobs:
           retention-days: 7
 
   audit:
-    name: Dependency audit (report only)
+    name: Dependency audit
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Remaining advisories need semver-major upgrades tracked in docs/FORK.md.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm audit --omit=dev
+      - run: npm audit --omit=dev --audit-level=moderate
+
+  docker:
+    name: Docker image (amd64 build + container smoke test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: yt-agent:ci
+          cache-from: type=gha,scope=amd64
+          cache-to: type=gha,mode=max,scope=amd64
+      - name: Image checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(docker run --rm --entrypoint id yt-agent:ci -u)" = "10001"
+          docker run --rm --entrypoint sh yt-agent:ci -c 'fc-list | grep -q "Noto Sans Kannada" && ffmpeg -hide_banner -filters | grep -q subtitles && test ! -e .env && test ! -e config/credentials.json'
+          set +e
+          docker run --rm --init yt-agent:ci; code=$?
+          echo "no --stage -> exit $code"; test "$code" -eq 30
+      - name: Container smoke test (fake providers)
+        shell: bash
+        run: |
+          set +e
+          docker run --rm --init -e NODE_ENV=test -e PROVIDERS_MODE=fake yt-agent:ci \
+            --stage=generate --topic="Container smoke test" --length=short | tee smoke.log
+          code=${PIPESTATUS[0]}
+          echo "generate exit $code (expected 10 = awaiting human review)"
+          test "$code" -eq 10
+
+  docker-arm64:
+    name: Docker image (arm64 build via QEMU)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+      - uses: docker/setup-buildx-action@v3
+      - name: Build arm64
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/arm64
+          push: false
+          cache-from: type=gha,scope=arm64
+          cache-to: type=gha,mode=max,scope=arm64
