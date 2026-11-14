@@ -68,6 +68,53 @@ Text uses upstream's template fallbacks until the Phase 3 provider layer adds a 
 
 `npm run dry-run` runs the whole pipeline in an isolated `DATABASE_PATH`: generate → `needs_review` → publish refused → approve → fake upload. It then checks the MP4 with ffprobe and checks the privacy and disclosure fields. CI runs it on every push.
 
+### Job mode (Phase 2)
+
+`npm run job -- --stage=<ingest|generate|qa|publish|learn> [--topic=…] [--brief=<id>] [--content=<id>] [--length=short|medium|long] [--timeout-ms=N]` runs one stage and exits. It never starts the HTTP server or the scheduler. The last stdout line is a JSON summary. The server mode (`npm start`) still works.
+
+| Exit code | Meaning | Examples |
+|---|---|---|
+| 0 | done, or nothing to do | upload finished; nothing approved to upload |
+| 10 | waiting for a human | video awaits review; publish blocked by the approval gate; a disabled feature |
+| 20 | transient, retry later | network or rate limit; another run holds the lease; timeout; SIGTERM |
+| 30 | fatal, retrying won't help | bad arguments or config; missing credentials; unknown errors |
+
+| Stage | What it does now | Idempotency |
+|---|---|---|
+| `generate` | Runs the upstream pipeline once and ends in `needs_review` | Keyed `brief:<id>`, `topic:<normalised>`, or `daily:<UTC date>`. A completed key does nothing; a failed or interrupted key **resumes from upstream's checkpoints** |
+| `qa` | Re-runs quality checks on unapproved content | Never approves; moves only between `needs_review` and `needs_attention` |
+| `publish` | Uploads every approved, not-yet-uploaded item (private + `publishAt`) | One upload per item (schedule status and upstream reconciliation for unknown outcomes) |
+| `learn` | Records 24h/7d analytics evidence | Reports partial and total failures (upstream swallowed them) |
+| `ingest` | Exits 30: arrives in Phase 5 | n/a |
+
+Single-runner lease: `jobs/lease.js` (file-based; `JOB_LEASE_DIR`). It is acquired **before** the agent initialises, because initialisation marks unfinished jobs as interrupted. A lease past its expiry, or held by a dead process on the same host, is taken over. In AWS it is replaced by a DynamoDB conditional-write lease with the same interface (Phase 9). Stage timeout: `JOB_TIMEOUT_MS` (default 45 minutes). SIGTERM releases the lease and exits 20.
+
+Tested in this sandbox: a hard `kill -9` in the middle of `generate`, followed by a re-run, took over the lease and resumed the same job, reusing the strategy, script, thumbnail and SEO checkpoints. Running `publish` twice uploaded once.
+
+### State in ephemeral containers (design, built in Phase 9)
+
+Fargate tasks start with an empty disk, and upstream keeps everything in `data/` (SQLite plus media with absolute paths). Plan:
+1. Acquire the DynamoDB lease, then download `state/youtube_automation.db` and the media referenced by unfinished jobs from S3 into `data/`.
+2. Run the stage, uploading new media under `s3://…/media/<productionId>/` as it is produced.
+3. Upload the SQLite file (versioned bucket, so a bad run can be rolled back), then release the lease.
+
+One SQLite file per channel keeps upstream's database code unchanged. At one or two videos a day, a database service is not worth its cost or its rule-6 risk (no RDS). Absolute media paths will be rewritten to `data/`-relative keys when the S3 adapter lands.
+
+### Docker image
+
+`Dockerfile` builds `node:22-bookworm-slim` for arm64 and amd64:
+- **deps stage:** `npm ci --omit=dev --ignore-scripts`; only sqlite3 and sharp are rebuilt.
+- **runtime stage:** distro ffmpeg, Noto fonts including Kannada, Playwright's headless Chromium shell, and tini.
+- **user:** non-root uid 10001; code is root-owned and only `data/ logs/ uploads/ temp/` are writable.
+- **defaults:** `NODE_ENV=production`, `LOG_FORMAT=json`, `FEATURE_SCHEDULER=false`, `DISABLE_TELEMETRY=true`.
+- **no default stage.**
+
+```bash
+docker run --rm --init <image> --stage=generate --topic="..."
+```
+
+CI builds amd64 and runs container checks: uid, Kannada font, ffmpeg subtitle filter, no secrets in the image, exit 30 without `--stage`, and a fake-mode `generate` that exits 10. CI also builds arm64 under QEMU. This sandbox blocks the Debian mirrors, so the image is verified in CI rather than locally.
+
 ### Small fixes
 
 - `utils/ffmpeg.js`: fall back to system `ffmpeg` when `ffmpeg-static` is installed without its binary.
@@ -89,7 +136,7 @@ Text uses upstream's template fallbacks until the Phase 3 provider layer adds a 
 
 | Item | Status | Plan |
 |---|---|---|
-| `npm audit`: 10 advisories (1 critical `tar`, 5 high), all needing semver-major upgrades: `sqlite3` 6 (build chain: tar, node-gyp, cacache), `sharp` 0.35, `node-cron` 4 | Open. The `tar`/node-gyp chain runs at install time only; the Docker build uses prebuilt binaries | One upgrade per commit with tests, Phase 2 (Dockerfile) |
+| `npm audit` | **Resolved in Phase 2:** 0 advisories after upgrading sqlite3 6, sharp 0.35 and node-cron 4; the CI audit is now blocking | n/a |
 | AUDIT S5: untrusted text in LLM prompts without delimiters | Open | Phase 3 provider layer (delimited untrusted blocks, no tools) |
 | AUDIT S8: OAuth flows have no `state`/PKCE; three duplicate implementations | Open (setup-time, loopback only) | Consolidate in Phase 8 |
 | AUDIT S11: model IDs hard-coded in `utils/ai-text-service.js` | Open | Phase 3 router config resolved at runtime |
@@ -103,3 +150,7 @@ Text uses upstream's template fallbacks until the Phase 3 provider layer adds a 
 |---|---|---|---|
 | `zod` ^4.6.7 | added | MIT | Config and input schema validation |
 | transitive | `npm audit fix` (non-breaking) | unchanged | 36 → 10 advisories |
+| `sqlite3` 5 → 6 | major | BSD-3-Clause | Drops the vulnerable node-gyp/tar install chain |
+| `sharp` 0.34 → 0.35 | major | Apache-2.0 (libvips LGPL, existing exception) | libvips security fixes |
+| `node-cron` 3 → 4 | major | ISC | uuid advisory; `createTask()` replaces `schedule(…, { scheduled: false })` |
+| Node engine | `>=18.17` → `>=20.17` | n/a | Required by the three upgrades; Node 18 is end-of-life (April 2025). **Diverges from CLAUDE.md's "Node 18.17+"** |
