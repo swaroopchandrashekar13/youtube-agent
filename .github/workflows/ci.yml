@@ -182,6 +182,11 @@ jobs:
         with:
           context: .
           platforms: linux/arm64
-          push: false
+          load: true
+          tags: yt-agent:arm64
           cache-from: type=gha,scope=arm64
           cache-to: type=gha,mode=max,scope=arm64
+      - name: Native modules load on arm64
+        run: >
+          docker run --rm --platform linux/arm64 --entrypoint node yt-agent:arm64
+          -e "require('sqlite3'); require('sharp'); console.log(process.arch, 'native modules ok')"

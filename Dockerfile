@@ -18,8 +18,11 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
 # --ignore-scripts: no third-party install scripts run (ffmpeg-static would download a GPL binary).
+# sqlite3 is compiled here: its prebuilt binary needs glibc 2.38, newer than bookworm's 2.36.
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund \
- && npm rebuild sqlite3 sharp \
+ && npm rebuild sqlite3 --build-from-source \
+ && npm rebuild sharp \
+ && node -e "require('sqlite3'); require('sharp')" \
  && npm cache clean --force
 
 # ── runtime ──
@@ -56,4 +59,5 @@ RUN groupadd --system --gid 10001 app \
 
 USER app
 # No default stage on purpose: a run without --stage fails fast with exit code 30.
-ENTRYPOINT ["/usr/bin/tini", "--", "node", "jobs/run-job.js"]
+# -s: reap zombies even when tini is not PID 1 (docker --init / ECS initProcessEnabled).
+ENTRYPOINT ["/usr/bin/tini", "-s", "--", "node", "jobs/run-job.js"]
