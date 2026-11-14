@@ -965,7 +965,9 @@ class Database {
     const details = {
       strategyContext: input.strategyContext || {},
       resumeCount: 0,
-      reusedStages: []
+      reusedStages: [],
+      // Fork: idempotency key used by job mode (e.g. brief:<id>, daily:<date>).
+      ...(input.jobKey ? { jobKey: String(input.jobKey) } : {})
     };
     await this.executeQuery(
       `INSERT INTO generation_jobs (
@@ -974,6 +976,16 @@ class Database {
       [id, input.topic || null, input.style || null, input.length || 'medium', input.source || 'manual', JSON.stringify(details)]
     );
     return this.getGenerationJob(id);
+  }
+
+  /** Fork: most recent generation job created with this job-mode idempotency key. */
+  async findGenerationJobByKey(jobKey) {
+    const row = await this.getRow(
+      `SELECT id FROM generation_jobs WHERE json_extract(details, '$.jobKey') = ?
+       ORDER BY created_at DESC, rowid DESC LIMIT 1`,
+      [String(jobKey)]
+    );
+    return row ? this.getGenerationJob(row.id) : null;
   }
 
   async getGenerationJob(id) {

@@ -1316,7 +1316,8 @@ class YouTubeAutomationAgent {
 
     const job = await this.db.createGenerationJob({
       ...validation.value,
-      source: input.source || 'manual'
+      source: input.source || 'manual',
+      jobKey: input.jobKey
     });
 
     const work = this.runGenerationJob(job.id, validation.value)

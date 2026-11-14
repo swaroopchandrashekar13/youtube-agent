@@ -91,6 +91,24 @@ jobs:
           FFMPEG_PATH: /usr/bin/ffmpeg
           FFPROBE_PATH: /usr/bin/ffprobe
 
+      - name: Job mode smoke test (exit codes and idempotency)
+        shell: bash
+        run: |
+          set +e
+          expect() { "${@:2}"; code=$?; echo "exit=$code (expected $1): ${*:2}"; [ "$code" -eq "$1" ] || exit 1; }
+          expect 10 npm run -s job -- --stage=generate --topic="CI smoke test" --length=short
+          expect 10 npm run -s job -- --stage=generate --topic="CI smoke test" --length=short
+          expect 10 npm run -s job -- --stage=qa
+          expect 0  npm run -s job -- --stage=publish
+          expect 30 npm run -s job -- --stage=nope
+        env:
+          PROVIDERS_MODE: fake
+          DATABASE_PATH: ${{ runner.temp }}/job-smoke/db.sqlite
+          JOB_LEASE_DIR: ${{ runner.temp }}/job-smoke/leases
+          FAKE_YOUTUBE_DIR: ${{ runner.temp }}/job-smoke/youtube
+          FFMPEG_PATH: /usr/bin/ffmpeg
+          FFPROBE_PATH: /usr/bin/ffprobe
+
       - name: Upload dry-run output
         if: always()
         uses: actions/upload-artifact@v4

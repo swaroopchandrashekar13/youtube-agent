@@ -24,7 +24,8 @@
     "dry-run": "node scripts/dry-run.js",
     "license:check": "node scripts/check-licenses.js",
     "hooks:install": "git config core.hooksPath scripts/hooks",
-    "secrets:scan": "gitleaks git --redact --no-banner ."
+    "secrets:scan": "gitleaks git --redact --no-banner .",
+    "job": "node jobs/run-job.js"
   },
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.0",
