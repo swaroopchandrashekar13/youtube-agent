@@ -54,7 +54,18 @@ Scored for fit with our pipeline: code-rendered visuals (Revideo/Playwright), TT
 | Always-on live | **No.** It costs money every month (vendor pages: ~€2-8/month plus bandwidth) and isn't needed yet. Scheduled lives stay an optional later feature at near-zero cost |
 | Priority | **Video quality and audience reach** before new formats |
 
-### Language gate (when to add a third language)
+#### Channel names (shortlist 2026-11-15, owner to pick)
+
+Research: a keyword in the channel name helps discovery only slightly. Video titles, thumbnails and viewer satisfaction matter far more, and brandable names win over time. So: short, clear, distinctive, the same as the @handle, the topic visible at a glance, and keywords in the description, banner tagline and channel tags rather than stuffed into the name. Web searches found **no existing channel or brand** for the candidates below. Handle availability must still be confirmed in YouTube Studio (youtube.com is blocked from the build sandbox).
+
+| Channel | Pick | Alternatives | Tagline (banner + first line of description) |
+|---|---|---|---|
+| A: Data stories | **Data Kahani** (डेटा कहानी, "data story") | Numbers Bolte Hain; ChartChai | "India's stories, told in numbers" / "आंकड़ों में भारत की कहानी" |
+| B: Scam & cyber-safety | **Scam Samjho** (स्कैम समझो, "understand the scam") | Dhokha Decoded; ScamProof | "Spot the scam before it spots you" / "धोखे को पहचानो, पैसा बचाओ" |
+
+Avoid names close to official or large channels (CyberDost / I4C, Cyber Suraksha, "Chaukanni Chachi"), which would look like impersonation, and generic names that can't be owned ("India in Numbers", "Scam Alert").
+
+## Language gate (when to add a third language)
 
 An extra language seems free but isn't. Each one adds:
 - translation tokens and TTS minutes, both recorded in the cost ledger;
