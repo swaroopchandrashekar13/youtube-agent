@@ -24,7 +24,7 @@ To keep merges cheap, fork changes are **additive**: new modules under `utils/` 
 | Unwanted upstream features | **Disabled via config** (feature switches below), not deleted |
 | Monthly cap | `$15` hard cap on paid API spend (Phase 3 ledger); AWS guarded separately by an AWS Budget alert (~₹500) |
 | AWS account | `858082489874`, region `ap-southeast-2` |
-| Language / niche | See [`CHANNEL.md`](CHANNEL.md) (recommendation, pending owner confirmation) |
+| Channels (2026-11-15) | **A: Data stories** and **B: Scam & cyber-safety**; English main track + Hindi audio; more Indian languages via the language gate in [`CHANNEL.md`](CHANNEL.md); no always-on live; priority is video quality and reach |
 
 ## Divergences from upstream
 

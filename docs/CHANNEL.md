@@ -1,6 +1,6 @@
 # Channel portfolio research
 
-Status: **options for the owner to choose from.** Researched 2026-11-15. Supersedes the earlier "Kannada tech careers" recommendation, which the owner declined.
+Status: **decided 2026-11-15**: channels A + B, English main track + Hindi, no always-on live (see "Owner decisions"). Researched 2026-11-15. Supersedes the earlier "Kannada tech careers" recommendation, which the owner declined.
 
 Most RPM and competition numbers below come from vendor or SEO blogs with no published method, and they often disagree. Use them to rank ideas, not to forecast income. Real numbers come from YouTube Studio once a channel exists.
 
@@ -45,7 +45,48 @@ Scored for fit with our pipeline: code-rendered visuals (Revideo/Playwright), TT
 | 8 | Verify the API for multi-language audio tracks; per-project quota budget shared across channels |
 | New | **Live stage**: render a dashboard or scene with Playwright/Revideo → ffmpeg → RTMP to a YouTube `liveBroadcast`, started on schedule or approval and stopped after N hours. Human approval applies to the stream's setup (title, data sources, duration), not every frame |
 
-## Decisions for the owner
+## Owner decisions (2026-11-15)
+
+| Question | Decision |
+|---|---|
+| Channels | **A: Data stories** and **B: Scam & cyber-safety** |
+| Languages | **English main track + Hindi audio track** (plus Hindi titles and descriptions). More Indian languages only once they pass the language gate below |
+| Always-on live | **No.** It costs money every month (vendor pages: ~€2-8/month plus bandwidth) and isn't needed yet. Scheduled lives stay an optional later feature at near-zero cost |
+| Priority | **Video quality and audience reach** before new formats |
+
+### Language gate (when to add a third language)
+
+An extra language seems free but isn't. Each one adds:
+- translation tokens and TTS minutes, both recorded in the cost ledger;
+- a reviewer who reads that language;
+- a risk that a poor dub makes viewers unhappy, which hurts YouTube's satisfaction signal.
+
+A language is added only when all three are true:
+1. **Metadata test first.** Translated titles and descriptions cost almost nothing. Add them for the candidate language and check Studio for impressions and clicks from its audience.
+2. **Voice passes the blind bake-off** (Phase 4) at ≥3.5/5 average naturalness, including English tech terms.
+3. **The monthly cost stays inside the cap** after adding it, and someone can review that language.
+
+Candidates in likely order: Tamil, Telugu, Kannada, Bengali, Marathi. Also compare YouTube's own free auto-dubbing, where it exists for that language, against our own voice track before paying for TTS.
+
+## Quality and reach plan
+
+The research agrees that YouTube now ranks on **viewer satisfaction**: retention, likes, shares, survey answers and "not interested" clicks. Click-through rate only gets a video tested; a high CTR with weak retention reads as clickbait and hurts. New channels are tested on small audiences first, so every early video counts. YouTube publishes no signal weights; the points below are consensus practice, not guarantees.
+
+| Lever | What we build | Phase |
+|---|---|---|
+| **Topic selection from real demand** | Strategy prompts pick topics people search for (YouTube search suggestions, Google Trends, our own analytics) and avoid repeats | 10 (+ learn loop, 8) |
+| **Hook in the first 15 seconds** | Script rules: open with the payoff or the scam's first move, never a channel intro. QA flags any script whose first scene isn't a hook | 3, 7 |
+| **One idea per video, real evidence** | Brief schema requires a thesis and sources per claim; QA blocks unsourced factual scenes | 5, 7 |
+| **Pacing and retention** | Scene length limits, a visual change every 3-6 seconds, sound and silence checks, loudness at about -14 LUFS for YouTube playback | 6, 7 |
+| **Original visuals** | Rotating chart, map and diagram template families per channel; the sameness check blocks videos too similar to recent uploads | 6, 7 |
+| **Packaging (title + thumbnail)** | 2-3 title and thumbnail variants per video for you to pick from on Telegram. Titles promise only what the video delivers. YouTube's built-in "Test & compare" for thumbnails is used where available. No manipulative edits on live videos | 6, 7 |
+| **Search and language reach** | Bilingual (English + Hindi) titles and descriptions, chapters, captions in both languages, Hindi audio track | 4, 8 |
+| **Shorts as trailers** | One or two Shorts cut from each long video's strongest moment, linking to the full video (Shorts scheduling stays approval-gated) | 6, 8 |
+| **Series and playlists** | Videos grouped in named series (for example "Scam of the week", "India in numbers: Monsoon"); end screens point to the next episode | 5, 8 |
+| **Consistency over volume** | 1-2 long videos per channel per week to start; quality gates over quantity | 9 |
+| **Learn from every video** | 24-hour and 7-day retention curves, CTR and comment themes go back to the strategy side as proposals, never automatic changes | 8, 10 |
+
+## Decisions for the owner (original questions)
 
 1. Which two channels to start with (recommended: A + B).
 2. Main language per channel (English, Hinglish, Hindi, Kannada) and which dub tracks to add.
