@@ -13,7 +13,7 @@
 const { z } = require('zod');
 const { EXIT, exitCodeFor, jobError } = require('./exit-codes');
 const { FileLeaseProvider } = require('./lease');
-const { STAGES, stages } = require('./stages');
+const { STAGES, NO_YOUTUBE_STAGES, stages } = require('./stages');
 
 const ID = /^[A-Za-z0-9._-]{1,100}$/;
 
@@ -23,6 +23,8 @@ const argsSchema = z.object({
   brief: z.string().regex(ID, 'must be letters, digits, dot, dash or underscore').optional(),
   content: z.string().regex(ID, 'must be a production id').optional(),
   length: z.enum(['short', 'medium', 'long']).optional(),
+  force: z.enum(['true', 'false']).optional(),
+  'preview-only': z.enum(['true', 'false']).optional(),
   'timeout-ms': z.coerce.number().int().min(1000).max(4 * 60 * 60 * 1000).optional()
 }).strict();
 
@@ -127,7 +129,7 @@ async function runJob({ argv, createAgent, leaseProvider, print = line => proces
     const create = createAgent || (() => new (require('../index').YouTubeAutomationAgent)());
     agent = create();
     if (!await agent.initialize()) throw jobError('The agent failed to initialise', EXIT.FATAL, 'INIT_FAILED');
-    if (agent.setupRequired && args.stage !== 'ingest') {
+    if (agent.setupRequired && !NO_YOUTUBE_STAGES.includes(args.stage)) {
       throw jobError('Credentials are missing. Run npm run walkthrough, or set PROVIDERS_MODE=fake for an offline run', EXIT.FATAL, 'SETUP_REQUIRED');
     }
 

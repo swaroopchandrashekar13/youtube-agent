@@ -1,0 +1,19 @@
+{
+  "channelId": "scam-samjho",
+  "name": "Scam Samjho",
+  "handle": "@ScamSamjho",
+  "tagline": { "en": "Spot the scam before it spots you", "hi": "धोखे को पहचानो, पैसा बचाओ" },
+  "language": "en",
+  "dubLanguages": ["hi"],
+  "categoryId": "27",
+  "defaultPrivacyAfterApproval": "public",
+  "theme": { "bg": "#0d1220", "panel": "#182036", "accent": "#ff5a4f", "accent2": "#ffd166", "text": "#ffffff", "muted": "#a8b3cf" },
+  "voice": {
+    "gemini": { "en": "Charon", "hi": "Charon" },
+    "sarvam": { "hi": "anushka" },
+    "espeak": { "en": "en-gb", "hi": "hi" }
+  },
+  "narrationStyle": { "en": "Read in a calm, clear, trustworthy Indian English explainer voice, at a steady pace.", "hi": "शांत, साफ़ और भरोसेमंद आवाज़ में, आराम से पढ़ें।" },
+  "burnSubtitles": false,
+  "youtube": { "channelIdOnYouTube": null }
+}

@@ -1,0 +1,12 @@
+{
+  "$comment": "USD prices used by the cost ledger (CLAUDE.md rules 4 and 9). Fail-safe: when sources disagree the HIGHER price is recorded. Re-verify against the provider's own pricing page before raising any cap.",
+  "lastVerified": "2026-11-16",
+  "verifiedFrom": "Secondary sources only (ai.google.dev was not reachable from the build sandbox); highest quoted figures used.",
+  "providers": {
+    "gemini-tts": { "unit": "1M tokens", "inputUsd": 1.0, "outputUsd": 20.0, "assumedAudioTokensPerSecond": 32 },
+    "sarvam-tts": { "unit": "10k characters", "usd": 0.25, "note": "placeholder upper bound; verify on sarvam.ai before enabling" },
+    "espeak": { "unit": "free", "usd": 0 },
+    "fake": { "unit": "free", "usd": 0 }
+  },
+  "caps": { "monthlyUsd": 15, "perVideoUsd": 1.5 }
+}

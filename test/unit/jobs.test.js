@@ -102,7 +102,7 @@ test('runJob maps outcomes to exit codes and always releases the lease', async (
   assert.equal(ok.report.outcome, 'noop');
   assert.equal(leases.released, 1);
 
-  const setup = await runJob({ argv: ['--stage=qa'], leaseProvider: leases, print, createAgent: () => fakeAgent({ setupRequired: true }) });
+  const setup = await runJob({ argv: ['--stage=publish'], leaseProvider: leases, print, createAgent: () => fakeAgent({ setupRequired: true }) });
   assert.equal(setup.exitCode, EXIT.FATAL);
   assert.equal(setup.report.error.code, 'SETUP_REQUIRED');
   assert.equal(leases.released, 2);

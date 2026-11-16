@@ -8,7 +8,9 @@
  */
 const { EXIT, jobError } = require('./exit-codes');
 
-const STAGES = Object.freeze(['ingest', 'generate', 'qa', 'publish', 'learn']);
+const STAGES = Object.freeze(['ingest', 'generate', 'qa', 'notify', 'approvals', 'publish', 'learn']);
+// Stages that work before YouTube is connected.
+const NO_YOUTUBE_STAGES = Object.freeze(['ingest', 'generate', 'qa', 'notify', 'approvals']);
 
 /**
  * Idempotency key for a generate run: a brief wins, then an explicit topic,
@@ -28,15 +30,86 @@ async function reviewOutcome(agent, productionId) {
 }
 
 const stages = {
-  async ingest() {
-    // Phase 5 adds brief validation, quarantine and git/S3 sync.
-    throw jobError('The ingest stage arrives in Phase 5 (brief hand-off contract)', EXIT.FATAL, 'NOT_IMPLEMENTED');
+  async ingest(agent) {
+    const { ingestInbox } = require('../pipeline/brief');
+    const { TelegramClient } = require('../pipeline/telegram');
+    const result = ingestInbox();
+    if (result.rejected.length) {
+      const telegram = new TelegramClient();
+      if (telegram.configured) {
+        const lines = result.rejected.map(item => `• ${item.file}: ${item.errors.slice(0, 3).join('; ')}`);
+        await telegram.sendMessage(`⚠️ ${result.rejected.length} brief(s) rejected and moved to inbox/rejected:\n${lines.join('\n')}`).catch(() => {});
+      }
+      await agent.operator?.notify({ type: 'brief_rejected', level: 'warning', title: 'Brief rejected', message: `${result.rejected.length} brief(s) failed validation`, data: result }).catch(() => {});
+    }
+    return { outcome: result.rejected.length ? 'needs_human' : (result.accepted.length ? 'ok' : 'noop'), summary: result };
+  },
+
+  async generateFromBrief(agent, options) {
+    const { loadBrief } = require('../pipeline/brief');
+    const { produceFromBrief } = require('../pipeline/produce');
+    const { runBriefQa } = require('../pipeline/qa');
+    const { registerProduction } = require('../pipeline/register');
+    const brief = loadBrief(options.brief);
+    const productionId = `brief-${brief.briefId}`;
+    const existing = await agent.db.getProductionBundle(productionId);
+    if (existing && ['approved', 'needs_review'].includes(existing.review_status) && !options.force) {
+      return { outcome: existing.review_status === 'approved' ? 'ok' : 'needs_human', summary: { action: 'already_generated', productionId, reviewStatus: existing.review_status } };
+    }
+    const manifest = await produceFromBrief(brief);
+    const qa = await runBriefQa(brief, manifest);
+    const registered = await registerProduction(agent.db, brief, manifest, qa);
+    return {
+      outcome: 'needs_human',
+      summary: {
+        action: 'created', productionId, title: manifest.title, reviewStatus: registered.status, durationSec: manifest.durationSec,
+        costUsd: manifest.costUsd, narration: manifest.narration, video: manifest.files.video,
+        qa: { passed: qa.passed, score: qa.score, failed: qa.checks.filter(check => !check.passed).map(check => `${check.id}: ${check.detail}`) }
+      }
+    };
+  },
+
+  async notify(agent, options) {
+    const { TelegramClient, notifyPending } = require('../pipeline/telegram');
+    const telegram = new TelegramClient();
+    if (!telegram.configured) throw jobError('Telegram is not configured (TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)', EXIT.FATAL, 'NOT_CONFIGURED');
+    const sent = await notifyPending(agent, telegram, { previewOnly: options['preview-only'] === 'true', content: options.content || null });
+    return { outcome: sent.length ? 'needs_human' : 'noop', summary: { sent } };
+  },
+
+  async approvals(agent) {
+    const { TelegramClient, processDecisions } = require('../pipeline/telegram');
+    const { approveProduction } = require('../pipeline/register');
+    const telegram = new TelegramClient();
+    if (!telegram.configured) throw jobError('Telegram is not configured (TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)', EXIT.FATAL, 'NOT_CONFIGURED');
+    const youtubeReady = Boolean(agent.agents.publishing);
+    const PENDING = 'fork_pending_approval_';
+    const applied = [];
+    // Decisions taken before YouTube was connected are applied first.
+    if (youtubeReady) {
+      const settings = await agent.db.getAllSettings();
+      for (const [key, value] of Object.entries(settings)) {
+        if (!key.startsWith(PENDING) || !value) continue;
+        const decision = JSON.parse(value.value ?? value);
+        await approveProduction(agent, key.slice(PENDING.length), decision);
+        await agent.db.setSetting(key, '', 'applied');
+        applied.push(key.slice(PENDING.length));
+      }
+    }
+    const decisions = await processDecisions(agent, telegram, {
+      approve: async (id, decision) => {
+        if (youtubeReady) return approveProduction(agent, id, decision);
+        // The human decision is recorded; scheduling waits for the YouTube connection.
+        await agent.db.setSetting(`${PENDING}${id}`, JSON.stringify(decision), 'Human approval awaiting YouTube connection');
+        return { deferred: true };
+      }
+    });
+    return { outcome: decisions.length || applied.length ? 'ok' : 'noop', summary: { decisions, appliedDeferred: applied } };
   },
 
   async generate(agent, options) {
-    if (options.brief) {
-      throw jobError('Generating from a brief needs the Phase 5 ingest stage; use --topic for now', EXIT.FATAL, 'NOT_IMPLEMENTED');
-    }
+    if (options.brief) return stages.generateFromBrief(agent, options);
+    if (!agent.agents.strategy) throw jobError('Topic-based generation needs completed setup; use --brief=<id>', EXIT.FATAL, 'SETUP_REQUIRED');
     const jobKey = generationKey(options);
     let job = await agent.db.findGenerationJobByKey(jobKey);
     let action;
@@ -164,4 +237,4 @@ const stages = {
   }
 };
 
-module.exports = { STAGES, stages, generationKey };
+module.exports = { STAGES, NO_YOUTUBE_STAGES, stages, generationKey };

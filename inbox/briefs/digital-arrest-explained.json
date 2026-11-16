@@ -1,0 +1,272 @@
+{
+  "schemaVersion": 1,
+  "briefId": "digital-arrest-explained",
+  "channelId": "scam-samjho",
+  "language": "en",
+  "pillar": "scam-breakdown",
+  "series": "Scam of the Week",
+  "titleCandidates": [
+    "Digital Arrest Scam: How a Video Call Steals Your Savings",
+    "\"You Are Under Digital Arrest\": The Scam Explained in 2 Minutes",
+    "Police on Video Call? 4 Red Flags of the Digital Arrest Scam"
+  ],
+  "thumbnailText": "DIGITAL ARREST?",
+  "thesis": "There is no such thing as an arrest over a video call. The digital arrest scam works by fear and isolation, and you can stop it by hanging up and calling 1930.",
+  "outline": [
+    "Hook: the call that feels real",
+    "How big the problem is (official numbers)",
+    "How the scam works, step by step",
+    "Red flags",
+    "What the government's cybercrime centre says",
+    "What to do, and where to report"
+  ],
+  "description": "A caller in a police uniform says you are under \"digital arrest\" and must stay on a video call. It is a scam. In this video: how the digital arrest scam works step by step, the official numbers, four red flags, and exactly what to do.\n\nIf it happens to you or your family: hang up, do not pay, call the national cybercrime helpline 1930, and report at cybercrime.gov.in.\n\nThis video is for awareness and education. It is not legal advice.",
+  "tags": [
+    "digital arrest",
+    "digital arrest scam",
+    "cyber fraud india",
+    "online scam",
+    "scam awareness",
+    "1930 helpline",
+    "cybercrime",
+    "video call scam",
+    "fake police call",
+    "scam samjho"
+  ],
+  "scenes": [
+    {
+      "id": "s1",
+      "narration": "Your phone rings. On the video call is a man in a police uniform. He says a parcel in your name had drugs in it, and that you are now under digital arrest. You cannot hang up. You cannot tell anyone. It feels completely real. It is not.",
+      "onScreenText": "\"You are under digital arrest.\"",
+      "visualBrief": "Dark title card with the scam's opening line; urgent but calm.",
+      "flowPrompt_en": "Close-up of a smartphone on a table lighting up with an incoming video call from an unknown number, tense cinematic lighting, shallow depth of field, no faces, no logos.",
+      "factual": true,
+      "sourceRefs": [
+        "src1"
+      ],
+      "visual": {
+        "type": "title",
+        "kicker": "SCAM OF THE WEEK",
+        "headline": "\"You are under digital arrest.\"",
+        "sub": "The video call that empties bank accounts"
+      }
+    },
+    {
+      "id": "s2",
+      "narration": "This scam is not rare. In 2024, people in India lost more than one thousand nine hundred crore rupees to digital arrest scams and related cybercrimes. That figure comes from the Home Ministry's reply in Parliament.",
+      "onScreenText": "₹1,935 crore lost in 2024",
+      "visualBrief": "One big number on screen.",
+      "factual": true,
+      "sourceRefs": [
+        "src2"
+      ],
+      "visual": {
+        "type": "stat",
+        "value": "₹1,935 crore",
+        "label": "lost to digital arrest scams and related cybercrimes in 2024",
+        "note": "Source: Ministry of Home Affairs reply, Rajya Sabha, 12 March 2025"
+      }
+    },
+    {
+      "id": "s3",
+      "narration": "And it grew fast. About forty thousand cases were reported in 2022. About sixty thousand in 2023. And more than one lakh twenty-three thousand in 2024. That is roughly three times as many in just two years.",
+      "onScreenText": "Reported cases tripled in two years",
+      "visualBrief": "Bar chart, three bars growing.",
+      "factual": true,
+      "sourceRefs": [
+        "src2"
+      ],
+      "visual": {
+        "type": "bars",
+        "heading": "Reported cases: digital arrest scams and related cybercrimes",
+        "note": "Source: Rajya Sabha Unstarred Question 1505, 12 March 2025",
+        "bars": [
+          {
+            "label": "2022",
+            "value": 39925,
+            "display": "39,925"
+          },
+          {
+            "label": "2023",
+            "value": 60676,
+            "display": "60,676"
+          },
+          {
+            "label": "2024",
+            "value": 123672,
+            "display": "1,23,672"
+          }
+        ]
+      }
+    },
+    {
+      "id": "s4",
+      "narration": "Here is how it works. First, a call or message says you, or someone in your family, is linked to a crime, like drug trafficking or money laundering. Second, a fake officer appears on a video call, often in uniform. Third, they tell you to stay on the call and not speak to anyone. That is the so-called arrest. Fourth, they demand money to clear your name.",
+      "onScreenText": "How the scam works",
+      "visualBrief": "Four steps appearing one by one, in sync with the narration.",
+      "factual": true,
+      "sourceRefs": [
+        "src1",
+        "src3"
+      ],
+      "visual": {
+        "type": "steps",
+        "heading": "How the scam works",
+        "items": [
+          "A call says you are linked to a crime",
+          "A fake officer appears on video",
+          "\"Stay on the call. Tell no one.\"",
+          "They demand money to clear your name"
+        ],
+        "revealAt": [
+          1,
+          2,
+          3,
+          5
+        ]
+      }
+    },
+    {
+      "id": "s5",
+      "narration": "So watch for these red flags. An arrest or an investigation over a video call. Pressure to keep it secret from your family. A demand to move your money. And a threat that everything must happen right now.",
+      "onScreenText": "4 red flags",
+      "visualBrief": "Red-flag list, each flag appearing as it is spoken.",
+      "factual": false,
+      "sourceRefs": [],
+      "visual": {
+        "type": "redflags",
+        "heading": "4 red flags",
+        "items": [
+          "\"Arrest\" over a video call",
+          "\"Don't tell your family\"",
+          "\"Transfer your money\"",
+          "\"Do it right now\""
+        ],
+        "revealAt": [
+          1,
+          2,
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "s6",
+      "narration": "India's own cybercrime centre, I 4 C, has said it clearly. The C B I, the police, customs, the E D and judges do not arrest anyone over a video call.",
+      "onScreenText": "No agency arrests on a video call",
+      "visualBrief": "Quote card with attribution.",
+      "factual": true,
+      "sourceRefs": [
+        "src1"
+      ],
+      "visual": {
+        "type": "quote",
+        "text": "CBI, police, customs, ED and judges do not arrest anyone over a video call.",
+        "attribution": "Indian Cyber Crime Coordination Centre (I4C) advisory, October 2024"
+      }
+    },
+    {
+      "id": "s7",
+      "narration": "If you get such a call, do this. Hang up. Do not send any money. Call the national cybercrime helpline, one nine three zero. Report it at cybercrime dot gov dot in. And tell someone in your family straight away.",
+      "onScreenText": "What to do",
+      "visualBrief": "Checklist ticking off as spoken.",
+      "factual": true,
+      "sourceRefs": [
+        "src1"
+      ],
+      "visual": {
+        "type": "checklist",
+        "heading": "What to do",
+        "items": [
+          "Hang up",
+          "Do not send money",
+          "Call 1930",
+          "Report at cybercrime.gov.in",
+          "Tell your family"
+        ],
+        "revealAt": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "id": "s8",
+      "narration": "Share this with one person who picks up every unknown call. It could save their savings. This is Scam Samjho. Spot the scam, before it spots you.",
+      "onScreenText": "Share this with your family",
+      "visualBrief": "Outro card with channel name and tagline.",
+      "factual": false,
+      "sourceRefs": [],
+      "visual": {
+        "type": "outro",
+        "headline": "Share this with your family",
+        "sub": "Scam Samjho · Spot the scam before it spots you"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "id": "src1",
+      "url": "https://www.tribuneindia.com/news/india/cbi-ed-dont-nab-via-video-calls-advisory-to-curb-digital-arrest/",
+      "title": "CBI, ED don't nab via video calls: Advisory to curb 'digital arrest'",
+      "publisher": "The Tribune (reporting the I4C advisory, October 2024)",
+      "claimSupported": "I4C advisory: CBI, police, customs, ED and judges do not arrest over video calls; scammers pose as law enforcement and claim links to drug trafficking or money laundering; report at 1930 or cybercrime.gov.in."
+    },
+    {
+      "id": "src2",
+      "url": "https://rsdebate.nic.in/bitstream/123456789/757210/1/PQ_267_12032025_U1505_p268_p273.pdf",
+      "title": "Rajya Sabha Unstarred Question No. 1505, answered 12 March 2025",
+      "publisher": "Rajya Sabha / Ministry of Home Affairs",
+      "claimSupported": "Digital arrest scams and related cybercrimes: 39,925 incidents and Rs 91.14 crore (2022); 60,676 and Rs 339.03 crore (2023); 1,23,672 and Rs 1,935.51 crore (2024)."
+    },
+    {
+      "id": "src3",
+      "url": "https://www.outlookbusiness.com/magazine/what-lies-behind-the-play-of-mind-games-and-fear-that-end-in-digital-arrest",
+      "title": "What Lies Behind the Play of Mind Games and Fear that End in Digital Arrest",
+      "publisher": "Outlook Business",
+      "claimSupported": "Victims are kept on a continuous call, isolated from family, and pressured to transfer money."
+    }
+  ],
+  "cta": "Share this video with one family member who answers unknown calls.",
+  "complianceFlags": {
+    "containsAdvice": "safety",
+    "sensitiveTopic": false,
+    "namesPrivateIndividuals": false
+  },
+  "durationTargetSec": 110,
+  "translations": {
+    "hi": {
+      "title": "डिजिटल अरेस्ट स्कैम: एक वीडियो कॉल कैसे आपकी बचत लूट लेती है",
+      "description": "पुलिस की वर्दी में कोई वीडियो कॉल पर कहता है कि आप \"डिजिटल अरेस्ट\" में हैं। यह एक स्कैम है। इस वीडियो में: यह स्कैम कैसे काम करता है, सरकारी आंकड़े, चार रेड फ्लैग और आपको क्या करना चाहिए।\n\nअगर आपके या आपके परिवार के साथ ऐसा हो: कॉल काटें, पैसे न भेजें, साइबर क्राइम हेल्पलाइन 1930 पर कॉल करें और cybercrime.gov.in पर रिपोर्ट करें।\n\nयह वीडियो जागरूकता के लिए है, कानूनी सलाह नहीं।",
+      "scenes": {
+        "s1": {
+          "narration": "आपका फ़ोन बजता है। वीडियो कॉल पर पुलिस की वर्दी में एक आदमी है। वह कहता है कि आपके नाम के पार्सल में ड्रग्स मिले हैं, और अब आप डिजिटल अरेस्ट में हैं। आप कॉल नहीं काट सकते। किसी को बता नहीं सकते। सब कुछ बिल्कुल असली लगता है। लेकिन यह असली नहीं है।"
+        },
+        "s2": {
+          "narration": "यह स्कैम कोई छोटी बात नहीं है। साल 2024 में भारत में लोगों ने डिजिटल अरेस्ट और उससे जुड़े साइबर अपराधों में उन्नीस सौ करोड़ रुपये से ज़्यादा गँवाए। यह आंकड़ा गृह मंत्रालय ने संसद में दिया है।"
+        },
+        "s3": {
+          "narration": "और यह बहुत तेज़ी से बढ़ा। 2022 में क़रीब चालीस हज़ार मामले दर्ज हुए। 2023 में क़रीब साठ हज़ार। और 2024 में एक लाख तेईस हज़ार से ज़्यादा। यानी सिर्फ़ दो साल में लगभग तीन गुना।"
+        },
+        "s4": {
+          "narration": "यह स्कैम ऐसे काम करता है। पहला, एक कॉल या मैसेज आता है कि आप या आपके परिवार का कोई सदस्य किसी अपराध से जुड़ा है, जैसे ड्रग्स की तस्करी या मनी लॉन्ड्रिंग। दूसरा, वीडियो कॉल पर एक नक़ली अफ़सर आता है, अक्सर वर्दी में। तीसरा, वे कहते हैं कि कॉल पर बने रहो और किसी से बात मत करो। इसी को वे अरेस्ट कहते हैं। चौथा, वे आपका नाम साफ़ करने के लिए पैसे माँगते हैं।"
+        },
+        "s5": {
+          "narration": "तो इन रेड फ्लैग पर ध्यान दीजिए। वीडियो कॉल पर गिरफ़्तारी या जाँच। परिवार से बात छिपाने का दबाव। पैसे ट्रांसफ़र करने की माँग। और यह धमकी कि सब कुछ अभी, इसी वक़्त करना होगा।"
+        },
+        "s6": {
+          "narration": "भारत के अपने साइबर क्राइम सेंटर, आई फ़ोर सी, ने साफ़ कहा है। सीबीआई, पुलिस, कस्टम्स, ईडी और जज, किसी को भी वीडियो कॉल पर गिरफ़्तार नहीं करते।"
+        },
+        "s7": {
+          "narration": "अगर ऐसी कॉल आए, तो यह कीजिए। कॉल काट दीजिए। कोई पैसा मत भेजिए। साइबर क्राइम हेल्पलाइन, एक नौ तीन शून्य, पर कॉल कीजिए। cybercrime.gov.in पर रिपोर्ट कीजिए। और तुरंत अपने परिवार में किसी को बताइए।"
+        },
+        "s8": {
+          "narration": "यह वीडियो उस एक व्यक्ति को भेजिए जो हर अनजान कॉल उठा लेता है। इससे उनकी बचत बच सकती है। यह है स्कैम समझो। धोखे को पहचानो, पैसा बचाओ।"
+        }
+      }
+    }
+  }
+}

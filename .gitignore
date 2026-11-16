@@ -91,3 +91,19 @@ data/thumbnails/
 
 # Claude worktrees
 .claude/worktrees/
+
+# Fork: generated pipeline state (never commit media, caches or run state)
+data/productions/
+data/tts-cache/
+data/leases/
+data/fake-youtube/
+data/fake-telegram/
+ops/cost-ledger.json
+inbox/rejected/*
+!inbox/rejected/.gitkeep
+media-inbox/*
+!media-inbox/.gitkeep
+music-inbox/*
+!music-inbox/.gitkeep
+thumb-inbox/*
+!thumb-inbox/.gitkeep

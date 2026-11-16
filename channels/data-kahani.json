@@ -1,0 +1,19 @@
+{
+  "channelId": "data-kahani",
+  "name": "Data Kahani",
+  "handle": "@DataKahani",
+  "tagline": { "en": "India's stories, told in numbers", "hi": "आंकड़ों में भारत की कहानी" },
+  "language": "en",
+  "dubLanguages": ["hi"],
+  "categoryId": "27",
+  "defaultPrivacyAfterApproval": "public",
+  "theme": { "bg": "#0b1a1c", "panel": "#12292c", "accent": "#2ec4b6", "accent2": "#ff9f1c", "text": "#ffffff", "muted": "#a9c4c6" },
+  "voice": {
+    "gemini": { "en": "Kore", "hi": "Kore" },
+    "sarvam": { "hi": "anushka" },
+    "espeak": { "en": "en-gb", "hi": "hi" }
+  },
+  "narrationStyle": { "en": "Read as a curious, warm Indian English documentary narrator, at a steady pace.", "hi": "जिज्ञासु और गर्मजोशी भरी डॉक्यूमेंट्री आवाज़ में पढ़ें।" },
+  "burnSubtitles": false,
+  "youtube": { "channelIdOnYouTube": null }
+}

@@ -242,12 +242,21 @@ class PublishingSchedulingAgent {
       }
     };
     if (privacy.publishAt) videoMetadata.status.publishAt = privacy.publishAt;
+    // Fork: translated titles/descriptions (e.g. Hindi) so viewers find the video in their language.
+    const localizations = metadata.seo?.localizations;
+    const hasLocalizations = localizations && Object.keys(localizations).length > 0;
+    if (hasLocalizations) {
+      videoMetadata.localizations = Object.fromEntries(Object.entries(localizations).map(([language, item]) => [
+        language, { title: String(item.title || '').slice(0, 100), description: String(item.description || '').slice(0, 5000) }
+      ]));
+      videoMetadata.snippet.defaultLanguage = videoMetadata.snippet.defaultLanguage || metadata.seo.defaultLanguage || 'en';
+    }
     
     // Resolve the file before marking the network upload as attempted.
     const videoStream = await this.getVideoStream(metadata.video.path);
     scheduleEntry.uploadAttempted = true;
     const videoUpload = await this.youtube.videos.insert({
-      part: 'snippet,status',
+      part: hasLocalizations ? 'snippet,status,localizations' : 'snippet,status',
       requestBody: videoMetadata,
       media: {
         body: videoStream
