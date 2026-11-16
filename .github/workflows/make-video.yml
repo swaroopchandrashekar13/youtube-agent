@@ -1,0 +1,79 @@
+name: Make test video
+
+# Manual run: renders one brief and sends a TEST preview to Telegram (no approval
+# buttons, nothing is uploaded to YouTube). Secrets needed in the repository:
+#   GEMINI_API_KEY      real narration voice (without it a robotic draft voice is used)
+#   TELEGRAM_BOT_TOKEN  from @BotFather
+#   TELEGRAM_CHAT_ID    from `npm run telegram:whoami`
+on:
+  workflow_dispatch:
+    inputs:
+      brief:
+        description: Brief id (file name in inbox/briefs without .json)
+        required: true
+        default: digital-arrest-explained
+
+permissions:
+  contents: read
+
+concurrency:
+  group: make-video
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      BRIEF: ${{ inputs.brief }}
+      LOG_FORMAT: json
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      FFPROBE_PATH: /usr/bin/ffprobe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install system packages
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-core espeak-ng
+      - name: Install dependencies
+        run: |
+          npm ci --ignore-scripts
+          npm rebuild sqlite3 sharp
+          npx playwright install --with-deps --only-shell chromium
+      - name: Validate briefs
+        run: npm run -s job -- --stage=ingest
+      - name: Render video
+        shell: bash
+        run: |
+          set +e
+          [[ "$BRIEF" =~ ^[a-z0-9][a-z0-9-]{2,63}$ ]] || { echo "invalid brief id"; exit 1; }
+          npm run -s job -- --stage=generate --brief="$BRIEF" | tail -1 | tee summary.json
+          code=${PIPESTATUS[0]}
+          echo "generate exit $code (10 = waiting for human review)"
+          [ "$code" -eq 10 ] || [ "$code" -eq 0 ]
+      - name: Send TEST preview to Telegram
+        if: env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        shell: bash
+        run: |
+          set +e
+          npm run -s job -- --stage=notify --preview-only=true | tail -1
+          code=${PIPESTATUS[0]}
+          [ "$code" -eq 10 ] || [ "$code" -eq 0 ]
+      - name: Upload video
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-${{ inputs.brief }}
+          path: |
+            data/productions/*/final*.mp4
+            data/productions/*/thumbnail.png
+            data/productions/*/captions.*.srt
+            data/productions/*/qa.json
+            data/productions/*/manifest.json
+            summary.json
+          retention-days: 7
