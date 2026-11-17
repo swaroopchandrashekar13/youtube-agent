@@ -46,7 +46,14 @@ async function resolveGeminiTtsModel(apiKey) {
   const names = (data.models || []).map(model => String(model.name || '').replace(/^models\//, '')).filter(name => /tts/i.test(name));
   if (!names.length) throw new Error('The Gemini API lists no TTS model for this key');
   const version = name => (name.match(/(\d+(?:\.\d+)?)/) || [0, 0])[1] * 1;
-  names.sort((a, b) => (/flash/i.test(b) - /flash/i.test(a)) || (version(b) - version(a)) || (/preview/i.test(a) - /preview/i.test(b)));
+  // Prefer full flash models (not lite), newest version, stable over preview.
+  const rank = name => [/flash/i.test(name) ? 1 : 0, /lite/i.test(name) ? 0 : 1, version(name), /preview/i.test(name) ? 0 : 1];
+  names.sort((a, b) => {
+    const ra = rank(a);
+    const rb = rank(b);
+    for (let index = 0; index < ra.length; index++) if (ra[index] !== rb[index]) return rb[index] - ra[index];
+    return 0;
+  });
   cachedGeminiModel = names[0];
   return cachedGeminiModel;
 }
